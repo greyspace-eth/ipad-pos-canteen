@@ -31,12 +31,13 @@ export default function LoginScreen({ pin, pinError, onDigit, onClear, onBackspa
       <div className="relative flex flex-col items-center gap-[30px] w-[380px]">
         {/* Logo + title */}
         <div className="flex flex-col items-center gap-[14px]">
-          <div
-            className="w-[78px] h-[78px] rounded-[22px] bg-green flex items-center justify-center font-bold text-[38px] text-white"
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/logo.png"
+            alt="GOH CAIFAN"
+            className="w-[78px] h-[78px] rounded-[22px] object-cover"
             style={{ boxShadow: '0 10px 30px rgba(31,138,91,.35)' }}
-          >
-            饭
-          </div>
+          />
           <div className="flex flex-col items-center gap-[3px]">
             <span className="font-bold text-[24px] text-white tracking-[0.01em] font-grotesk">
               Goh Cai Png
