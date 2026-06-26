@@ -25,10 +25,9 @@ export async function POST(req: Request) {
   }
 
   const bucket = process.env.R2_BUCKET_NAME;
-  const publicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
-  if (!bucket || !publicUrl) {
+  if (!bucket) {
     return NextResponse.json(
-      { error: 'R2_BUCKET_NAME or NEXT_PUBLIC_R2_PUBLIC_URL is not set' },
+      { error: 'R2_BUCKET_NAME is not set' },
       { status: 503 }
     );
   }
@@ -58,6 +57,6 @@ export async function POST(req: Request) {
     })
   );
 
-  const url = `${publicUrl.replace(/\/$/, '')}/${key}`;
+  const url = `/api/images/${key}`;
   return NextResponse.json({ url });
 }
