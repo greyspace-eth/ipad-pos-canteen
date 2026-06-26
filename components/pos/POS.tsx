@@ -260,7 +260,7 @@ export default function POS() {
   // ── Menu CRUD ────────────────────────────────────────────────────────────
 
   function openAdd() {
-    update({ menuModalOpen: true, draftError: '', draft: { id: null, name: '', price: '', cat: 'Rice', imageUrl: null } });
+    update({ menuModalOpen: true, draftError: '', draft: { id: null, name: '', price: '', cat: 'Fixed Price', imageUrl: null } });
   }
 
   function openEdit(item: MenuItem) {
