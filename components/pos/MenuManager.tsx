@@ -14,10 +14,9 @@ function money(n: number) {
 }
 
 const CAT_BG: Record<string, string> = {
-  Rice: '#efe7d6',
-  Meat: '#f1ddd6',
-  Vegetable: '#e3eddc',
-  Extra: '#e8e3ef',
+  'Fixed Price': '#e3eddc',
+  'Custom': '#f1ddd6',
+  'Others': '#e8e3ef',
 };
 
 export default function MenuManager({ menu, onOpenAdd, onEdit, onDelete }: Props) {

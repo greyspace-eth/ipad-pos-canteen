@@ -18,7 +18,9 @@ function navStyle(active: boolean) {
 
 export default function Sidebar({ page, onNav, onLogout }: Props) {
   return (
-    <div className="w-[104px] flex-shrink-0 bg-ink-dark flex flex-col items-center px-3 py-5 h-full">
+    <div className="w-[104px] flex-shrink-0 bg-ink-dark flex flex-col items-center px-3 pt-5 pb-5 h-full">
+      {/* Top spacer — pushes logo + nav down */}
+      <div className="h-[60px] flex-shrink-0" />
       {/* Logo */}
       <div className="w-[58px] h-[58px] rounded-[17px] bg-green flex items-center justify-center font-bold text-[26px] text-white mb-[30px] font-grotesk">
         饭

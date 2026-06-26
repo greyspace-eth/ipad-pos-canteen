@@ -16,7 +16,7 @@ interface Props {
   onClose: () => void;
 }
 
-const CATS: MenuCategory[] = ['Rice', 'Meat', 'Vegetable', 'Extra'];
+const CATS: MenuCategory[] = ['Fixed Price', 'Custom', 'Others'];
 
 export default function MenuModal({
   draft,
@@ -132,7 +132,7 @@ export default function MenuModal({
           <span className="font-semibold text-[13px] text-ink-muted tracking-[0.02em] font-grotesk">
             Category
           </span>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {CATS.map((c) => (
               <button
                 key={c}

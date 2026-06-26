@@ -19,10 +19,9 @@ interface Props {
 }
 
 const CATEGORY_SECTIONS: { cat: MenuCategory; label: string; dotColor: string; bgColor: string }[] = [
-  { cat: 'Rice',      label: 'Rice & Staples',   dotColor: '#1f8a5b', bgColor: '#efe7d6' },
-  { cat: 'Meat',      label: 'Meat & Seafood',    dotColor: '#c0492f', bgColor: '#f1ddd6' },
-  { cat: 'Vegetable', label: 'Vegetables & Tofu', dotColor: '#1f8a5b', bgColor: '#e3eddc' },
-  { cat: 'Extra',     label: 'Egg & Extras',      dotColor: '#8b857b', bgColor: '#e8e3ef' },
+  { cat: 'Fixed Price', label: 'Fixed Price', dotColor: '#1f8a5b', bgColor: '#e3eddc' },
+  { cat: 'Custom',      label: 'Custom',      dotColor: '#c0492f', bgColor: '#f1ddd6' },
+  { cat: 'Others',      label: 'Others',      dotColor: '#8b857b', bgColor: '#e8e3ef' },
 ];
 
 function money(cents: number) {
