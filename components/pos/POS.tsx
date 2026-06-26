@@ -22,7 +22,6 @@ interface State {
   menu: MenuItem[];
   menuLoading: boolean;
   order: Record<string, number>;
-  staffDiscount: boolean;
   confirm: ConfirmState | null;
   history: HistoryEntry[];
   historyLoading: boolean;
@@ -41,7 +40,6 @@ const INITIAL: State = {
   menu: [],
   menuLoading: false,
   order: {},
-  staffDiscount: false,
   confirm: null,
   history: [],
   historyLoading: false,
@@ -51,20 +49,18 @@ const INITIAL: State = {
   draftUploading: false,
 };
 
-function computeOrder(menu: MenuItem[], order: Record<string, number>, staffDiscount: boolean) {
-  let subtotalCents = 0;
+function computeOrder(menu: MenuItem[], order: Record<string, number>) {
+  let totalCents = 0;
   const lines: OrderLine[] = [];
   menu.forEach((m) => {
     const q = order[m.id] || 0;
     if (q > 0) {
-      subtotalCents += q * m.price;
+      totalCents += q * m.price;
       lines.push({ id: m.id, name: m.name, price: m.price, qty: q });
     }
   });
-  const discountActive = staffDiscount && subtotalCents > 0;
-  const totalCents = Math.max(0, subtotalCents - (discountActive ? 50 : 0));
   const count = lines.reduce((a, l) => a + l.qty, 0);
-  return { lines, subtotalCents, discountActive, totalCents, count, empty: lines.length === 0 };
+  return { lines, totalCents, count, empty: lines.length === 0 };
 }
 
 function formatTimeFromDate(date: Date): string {
@@ -183,7 +179,7 @@ export default function POS() {
   async function doLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     update({
-      appStatus: 'login', pin: '', order: {}, staffDiscount: false,
+      appStatus: 'login', pin: '', order: {},
       confirm: null, menuModalOpen: false, menu: [], history: [],
     });
   }
@@ -204,12 +200,8 @@ export default function POS() {
     });
   }
 
-  function toggleDiscount() {
-    update((prev) => ({ staffDiscount: !prev.staffDiscount }));
-  }
-
   async function choosePayment(method: 'cash' | 'paynow') {
-    const o = computeOrder(s.menu, s.order, s.staffDiscount);
+    const o = computeOrder(s.menu, s.order);
     if (o.empty) return;
 
     try {
@@ -219,7 +211,7 @@ export default function POS() {
         body: JSON.stringify({
           totalCents: o.totalCents,
           payment: method,
-          staffDiscount: o.discountActive,
+          staffDiscount: false,
           items: o.lines.map((l) => ({
             menuItemId: l.id,
             name: l.name,
@@ -236,7 +228,7 @@ export default function POS() {
           time: formatTimeFromDate(new Date()),
           total: newOrder.totalCents,
           payment: method,
-          staff: o.discountActive,
+          staff: false,
           items: o.lines.map((l) => ({ name: l.name, qty: l.qty })),
         };
         update((prev) => ({
@@ -254,7 +246,7 @@ export default function POS() {
   }
 
   function finishOrder() {
-    update({ order: {}, staffDiscount: false, confirm: null });
+    update({ order: {}, confirm: null });
   }
 
   // ── Menu CRUD ────────────────────────────────────────────────────────────
@@ -403,7 +395,7 @@ export default function POS() {
     );
   }
 
-  const o = computeOrder(s.menu, s.order, s.staffDiscount);
+  const o = computeOrder(s.menu, s.order);
 
   return (
     <div className="w-[1366px] h-[1024px] relative overflow-hidden font-grotesk text-ink bg-cream">
@@ -427,13 +419,9 @@ export default function POS() {
                 orderLines={o.lines}
                 orderCount={o.count}
                 orderEmpty={o.empty}
-                subtotalCents={o.subtotalCents}
                 totalCents={o.totalCents}
-                discountActive={o.discountActive}
-                staffDiscount={s.staffDiscount}
                 onAddItem={addItem}
                 onChangeQty={changeQty}
-                onToggleDiscount={toggleDiscount}
                 onPayCash={() => choosePayment('cash')}
                 onPayNow={() => choosePayment('paynow')}
               />

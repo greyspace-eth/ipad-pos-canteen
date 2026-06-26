@@ -17,6 +17,7 @@ const CAT_BG: Record<string, string> = {
   'Fixed Price': '#e3eddc',
   'Custom': '#f1ddd6',
   'Others': '#e8e3ef',
+  'Staff Price': '#dce8ed',
 };
 
 export default function MenuManager({ menu, onOpenAdd, onEdit, onDelete }: Props) {

@@ -7,13 +7,9 @@ interface Props {
   orderLines: OrderLine[];
   orderCount: number;
   orderEmpty: boolean;
-  subtotalCents: number;
   totalCents: number;
-  discountActive: boolean;
-  staffDiscount: boolean;
   onAddItem: (id: string) => void;
   onChangeQty: (id: string, delta: number) => void;
-  onToggleDiscount: () => void;
   onPayCash: () => void;
   onPayNow: () => void;
 }
@@ -22,6 +18,7 @@ const CATEGORY_SECTIONS: { cat: MenuCategory; label: string; dotColor: string; b
   { cat: 'Fixed Price', label: 'Fixed Price', dotColor: '#1f8a5b', bgColor: '#e3eddc' },
   { cat: 'Custom',      label: 'Custom',      dotColor: '#c0492f', bgColor: '#f1ddd6' },
   { cat: 'Others',      label: 'Others',      dotColor: '#8b857b', bgColor: '#e8e3ef' },
+  { cat: 'Staff Price', label: 'Staff Price', dotColor: '#1a6fa0', bgColor: '#dce8ed' },
 ];
 
 function money(cents: number) {
@@ -88,13 +85,9 @@ export default function OrderStation({
   orderLines,
   orderCount,
   orderEmpty,
-  subtotalCents,
   totalCents,
-  discountActive,
-  staffDiscount,
   onAddItem,
   onChangeQty,
-  onToggleDiscount,
   onPayCash,
   onPayNow,
 }: Props) {
@@ -188,35 +181,6 @@ export default function OrderStation({
 
         {/* Totals + actions */}
         <div className="border-t-[1.5px] border-sand-light px-6 pt-[18px] pb-[22px] flex flex-col gap-[13px]">
-          <div className="flex justify-between font-medium text-[18px] text-ink-muted font-grotesk">
-            <span>Subtotal</span>
-            <span className="font-mono text-ink">{money(subtotalCents)}</span>
-          </div>
-
-          <div className="flex items-center justify-between px-[14px] py-3 bg-warm-white rounded-[14px] border-[1.5px] border-sand-light">
-            <div className="flex flex-col gap-[2px]">
-              <span className="font-semibold text-[18px] text-ink font-grotesk">Staff discount</span>
-              <span className="font-medium text-[15px] text-ink-muted font-grotesk">−$0.50 off total</span>
-            </div>
-            <button
-              onClick={onToggleDiscount}
-              className="w-[74px] h-[42px] rounded-[21px] border-none cursor-pointer flex items-center transition-colors duration-150 px-[4px]"
-              style={{ background: staffDiscount ? '#1f8a5b' : '#d9d3c7' }}
-            >
-              <span
-                className="w-[34px] h-[34px] rounded-full bg-white transition-transform duration-150"
-                style={{ boxShadow: '0 1px 3px rgba(0,0,0,.3)', transform: staffDiscount ? 'translateX(32px)' : 'translateX(0)' }}
-              />
-            </button>
-          </div>
-
-          {discountActive && (
-            <div className="flex justify-between font-medium text-[18px] text-red font-grotesk">
-              <span>Staff discount</span>
-              <span className="font-mono">−$0.50</span>
-            </div>
-          )}
-
           <div className="flex items-end justify-between pt-[10px] border-t-[1.5px] border-dashed border-[#e0dace]">
             <span className="font-bold text-[22px] text-ink font-grotesk">Total</span>
             <span className="font-mono font-bold text-[48px] text-green-dark leading-none tracking-[-0.02em]">

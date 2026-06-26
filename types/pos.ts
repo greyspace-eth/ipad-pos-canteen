@@ -1,4 +1,4 @@
-export type MenuCategory = 'Fixed Price' | 'Custom' | 'Others';
+export type MenuCategory = 'Fixed Price' | 'Custom' | 'Others' | 'Staff Price';
 export type PaymentMethod = 'cash' | 'paynow';
 export type AppStatus = 'loading' | 'login' | 'app';
 export type Page = 'operation' | 'history' | 'menu';
