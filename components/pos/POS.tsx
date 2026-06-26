@@ -55,12 +55,13 @@ function computeOrder(menu: MenuItem[], order: Record<string, number>) {
   menu.forEach((m) => {
     const q = order[m.id] || 0;
     if (q > 0) {
-      totalCents += q * m.price;
-      lines.push({ id: m.id, name: m.name, price: m.price, qty: q });
+      const sign = m.cat === 'Staff Price' ? -1 : 1;
+      totalCents += sign * q * m.price;
+      lines.push({ id: m.id, name: m.name, price: m.price, qty: q, cat: m.cat });
     }
   });
   const count = lines.reduce((a, l) => a + l.qty, 0);
-  return { lines, totalCents, count, empty: lines.length === 0 };
+  return { lines, totalCents: Math.max(0, totalCents), count, empty: lines.length === 0 };
 }
 
 function formatTimeFromDate(date: Date): string {

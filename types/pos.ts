@@ -40,4 +40,5 @@ export interface OrderLine {
   name: string;
   price: number; // cents
   qty: number;
+  cat: MenuCategory;
 }

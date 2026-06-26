@@ -15,10 +15,10 @@ interface Props {
 }
 
 const CATEGORY_SECTIONS: { cat: MenuCategory; label: string; dotColor: string; bgColor: string }[] = [
+  { cat: 'Staff Price', label: 'Staff Price', dotColor: '#1a6fa0', bgColor: '#dce8ed' },
   { cat: 'Fixed Price', label: 'Fixed Price', dotColor: '#1f8a5b', bgColor: '#e3eddc' },
   { cat: 'Custom',      label: 'Custom',      dotColor: '#c0492f', bgColor: '#f1ddd6' },
   { cat: 'Others',      label: 'Others',      dotColor: '#8b857b', bgColor: '#e8e3ef' },
-  { cat: 'Staff Price', label: 'Staff Price', dotColor: '#1a6fa0', bgColor: '#dce8ed' },
 ];
 
 function money(cents: number) {
@@ -150,12 +150,19 @@ export default function OrderStation({
             </div>
           ) : (
             <div className="py-[6px]">
-              {orderLines.map((l) => (
+              {orderLines.map((l) => {
+                const isDiscount = l.cat === 'Staff Price';
+                return (
                 <div key={l.id} className="flex items-center gap-3 px-[22px] py-[15px]">
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[20px] text-ink truncate font-grotesk">{l.name}</div>
-                    <div className="font-mono font-semibold text-[17px] text-green-dark mt-[3px]">
-                      {money(l.price * l.qty)}
+                    <div
+                      className="font-mono font-semibold text-[17px] mt-[3px]"
+                      style={{ color: isDiscount ? '#c0492f' : undefined }}
+                    >
+                      <span className={isDiscount ? '' : 'text-green-dark'}>
+                        {isDiscount ? '−' : ''}{money(l.price * l.qty)}
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center border-[1.5px] border-sand rounded-[14px] overflow-hidden">
@@ -174,7 +181,8 @@ export default function OrderStation({
                     </button>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>
