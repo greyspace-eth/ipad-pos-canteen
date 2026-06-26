@@ -1,13 +1,16 @@
 'use client';
 
 import { useRef } from 'react';
-import { Draft, MenuCategory } from '@/types/pos';
+import { Draft, MenuCategory, Lang } from '@/types/pos';
+import { T } from '@/lib/i18n';
 
 interface Props {
   draft: Draft;
   draftError: string;
   uploading: boolean;
+  lang: Lang;
   onChangeName: (v: string) => void;
+  onChangeNameZh: (v: string) => void;
   onChangePrice: (v: string) => void;
   onChangeCat: (c: MenuCategory) => void;
   onUploadImage: (file: File) => void;
@@ -22,7 +25,9 @@ export default function MenuModal({
   draft,
   draftError,
   uploading,
+  lang,
   onChangeName,
+  onChangeNameZh,
   onChangePrice,
   onChangeCat,
   onUploadImage,
@@ -30,6 +35,7 @@ export default function MenuModal({
   onSave,
   onClose,
 }: Props) {
+  const tr = T[lang];
   const isEdit = !!draft.id;
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -46,13 +52,13 @@ export default function MenuModal({
         style={{ boxShadow: '0 24px 60px rgba(0,0,0,.3)' }}
       >
         <span className="font-bold text-[21px] text-ink font-grotesk">
-          {isEdit ? 'Edit dish' : 'New dish'}
+          {isEdit ? tr.editDish : tr.addDish}
         </span>
 
         {/* Photo */}
         <div className="flex flex-col gap-2">
           <span className="font-semibold text-[13px] text-ink-muted tracking-[0.02em] font-grotesk">
-            Photo
+            {tr.photoLabel}
           </span>
           <div className="flex items-center gap-3">
             {draft.imageUrl ? (
@@ -78,7 +84,7 @@ export default function MenuModal({
                 disabled={uploading}
                 className="h-[38px] px-4 border-[1.5px] border-sand rounded-[10px] bg-warm-white font-grotesk font-semibold text-[13px] text-ink-mid cursor-pointer hover:bg-[#efeae0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {uploading ? 'Uploading…' : draft.imageUrl ? 'Replace photo' : 'Upload photo'}
+                {uploading ? tr.uploading : draft.imageUrl ? tr.replacePhoto : tr.uploadPhoto}
               </button>
               {draft.imageUrl && (
                 <button
@@ -86,7 +92,7 @@ export default function MenuModal({
                   onClick={onClearImage}
                   className="text-[12px] text-red font-grotesk font-medium text-left pl-1 cursor-pointer bg-transparent border-none"
                 >
-                  Remove photo
+                  {tr.removePhoto}
                 </button>
               )}
             </div>
@@ -100,10 +106,10 @@ export default function MenuModal({
           />
         </div>
 
-        {/* Name */}
+        {/* Dish name (English) */}
         <div className="flex flex-col gap-2">
           <span className="font-semibold text-[13px] text-ink-muted tracking-[0.02em] font-grotesk">
-            Dish name
+            {tr.dishNameEn}
           </span>
           <input
             value={draft.name}
@@ -113,10 +119,23 @@ export default function MenuModal({
           />
         </div>
 
+        {/* Dish name (Chinese) */}
+        <div className="flex flex-col gap-2">
+          <span className="font-semibold text-[13px] text-ink-muted tracking-[0.02em] font-grotesk">
+            {tr.dishNameZh}
+          </span>
+          <input
+            value={draft.nameZh}
+            onChange={(e) => onChangeNameZh(e.target.value)}
+            placeholder="例：咸蛋鸡"
+            className="h-[52px] border-[1.5px] border-sand rounded-[13px] px-4 font-grotesk font-semibold text-[16px] text-ink outline-none bg-warm-white focus:border-green focus:bg-white transition-colors"
+          />
+        </div>
+
         {/* Price */}
         <div className="flex flex-col gap-2">
           <span className="font-semibold text-[13px] text-ink-muted tracking-[0.02em] font-grotesk">
-            Price (SGD)
+            {tr.priceSGD}
           </span>
           <input
             value={draft.price}
@@ -130,7 +149,7 @@ export default function MenuModal({
         {/* Category */}
         <div className="flex flex-col gap-2">
           <span className="font-semibold text-[13px] text-ink-muted tracking-[0.02em] font-grotesk">
-            Category
+            {tr.categoryLabel}
           </span>
           <div className="grid grid-cols-2 gap-2">
             {CATS.map((c) => (
@@ -153,20 +172,19 @@ export default function MenuModal({
           <span className="font-semibold text-[13px] text-red font-grotesk">{draftError}</span>
         )}
 
-        {/* Actions */}
         <div className="flex gap-3 mt-1">
           <button
             onClick={onClose}
             className="flex-1 h-[54px] border-[1.5px] border-sand rounded-[14px] bg-white text-ink-mid cursor-pointer font-grotesk font-bold text-[15px] hover:bg-cream active:bg-cream transition-colors"
           >
-            Cancel
+            {tr.cancel}
           </button>
           <button
             onClick={onSave}
             disabled={uploading}
             className="flex-[1.4] h-[54px] border-none rounded-[14px] bg-green text-white cursor-pointer font-grotesk font-bold text-[15px] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isEdit ? 'Save changes' : 'Add to menu'}
+            {isEdit ? tr.saveChanges : tr.addToMenu}
           </button>
         </div>
       </div>

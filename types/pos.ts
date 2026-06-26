@@ -1,11 +1,15 @@
+import type { Lang } from '@/lib/i18n';
+
+export type { Lang };
 export type MenuCategory = 'Fixed Price' | 'Custom' | 'Others' | 'Staff Price';
 export type PaymentMethod = 'cash' | 'paynow';
 export type AppStatus = 'loading' | 'login' | 'app';
-export type Page = 'operation' | 'history' | 'menu';
+export type Page = 'operation' | 'history' | 'menu' | 'settings';
 
 export interface MenuItem {
   id: string;
   name: string;
+  nameZh?: string | null;
   price: number; // cents (from DB)
   cat: MenuCategory;
   imageUrl?: string | null;
@@ -30,6 +34,7 @@ export interface ConfirmState {
 export interface Draft {
   id: string | null;
   name: string;
+  nameZh: string;
   price: string; // user input, dollars as string
   cat: MenuCategory;
   imageUrl?: string | null;
@@ -38,6 +43,7 @@ export interface Draft {
 export interface OrderLine {
   id: string;
   name: string;
+  nameZh?: string | null;
   price: number; // cents
   qty: number;
   cat: MenuCategory;

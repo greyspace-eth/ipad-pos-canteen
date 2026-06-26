@@ -5,13 +5,14 @@ export const dynamic = 'force-dynamic';
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const body = await req.json();
-  const { name, price, cat, imageUrl, available } = body;
+  const { name, nameZh, price, cat, imageUrl, available } = body;
 
   try {
     const item = await prisma.menuItem.update({
       where: { id: params.id },
       data: {
         ...(name !== undefined && { name: String(name).trim() }),
+        ...(nameZh !== undefined && { nameZh: nameZh ? String(nameZh).trim() : null }),
         ...(price !== undefined && { price: Math.round(price) }),
         ...(cat !== undefined && { cat: String(cat) }),
         ...(imageUrl !== undefined && { imageUrl }),

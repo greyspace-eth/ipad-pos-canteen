@@ -11,8 +11,9 @@ datasource db {
 model MenuItem {
   id        String   @id @default(cuid())
   name      String
+  nameZh    String?
   price     Int      // stored in cents
-  cat       String   // Rice | Meat | Vegetable | Extra
+  cat       String
   imageUrl  String?
   available Boolean  @default(true)
   createdAt DateTime @default(now())

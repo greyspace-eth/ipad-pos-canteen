@@ -1,0 +1,130 @@
+export type Lang = 'en' | 'zh';
+
+export const T = {
+  en: {
+    // Sidebar
+    navOrder: 'Order',
+    navHistory: 'History',
+    navMenu: 'Menu',
+    navSettings: 'Settings',
+    navExit: 'Exit',
+    // Header page titles
+    pageOrder: 'Order Station',
+    pageHistory: 'Sales History',
+    pageMenu: 'Menu Manager',
+    pageSettings: 'Settings',
+    statusLive: 'LIVE',
+    statusOff: 'OFF',
+    // Category labels
+    catStaffPrice: 'Staff Price',
+    catFixedPrice: 'Fixed Price',
+    catCustom: 'Custom',
+    catOthers: 'Others',
+    // Order panel
+    currentOrder: 'Current Order',
+    itemsUnit: 'items',
+    noDishesTitle: 'No dishes yet',
+    noDishesBody: "Tap dishes on the left to build the customer's plate.",
+    total: 'Total',
+    cash: 'Cash',
+    cashSub: 'Tap when paid',
+    payNow: 'PayNow',
+    payNowSub: 'Scan QR',
+    // Sales history
+    ordersToday: 'Orders today',
+    salesToday: 'Sales today',
+    recentTxn: 'Recent transactions',
+    noTxnTitle: 'No transactions yet',
+    noTxnBody: 'Complete an order to see it here.',
+    loading: 'Loading…',
+    // Menu manager
+    newDish: '+ New dish',
+    // Menu modal
+    editDish: 'Edit dish',
+    addDish: 'New dish',
+    photoLabel: 'Photo',
+    uploadPhoto: 'Upload photo',
+    replacePhoto: 'Replace photo',
+    removePhoto: 'Remove photo',
+    uploading: 'Uploading…',
+    dishNameEn: 'Dish name',
+    dishNameZh: 'Chinese name (中文)',
+    priceSGD: 'Price (SGD)',
+    categoryLabel: 'Category',
+    cancel: 'Cancel',
+    saveChanges: 'Save changes',
+    addToMenu: 'Add to menu',
+    validationError: 'Enter a name and a valid price.',
+    // Confirm modal
+    paymentReceived: 'Payment received',
+    nextCustomer: 'Next customer',
+    // Settings
+    settingsLang: 'Language',
+    langEn: 'English',
+    langZh: '中文',
+  },
+  zh: {
+    // Sidebar
+    navOrder: '点餐',
+    navHistory: '历史',
+    navMenu: '菜单',
+    navSettings: '设置',
+    navExit: '退出',
+    // Header page titles
+    pageOrder: '点餐台',
+    pageHistory: '销售记录',
+    pageMenu: '菜单管理',
+    pageSettings: '设置',
+    statusLive: '在线',
+    statusOff: '离线',
+    // Category labels
+    catStaffPrice: '员工价',
+    catFixedPrice: '套餐',
+    catCustom: '自选',
+    catOthers: '其他',
+    // Order panel
+    currentOrder: '当前订单',
+    itemsUnit: '件',
+    noDishesTitle: '暂无菜品',
+    noDishesBody: '点击左边菜品加入订单。',
+    total: '总计',
+    cash: '现金',
+    cashSub: '收款后点击',
+    payNow: 'PayNow',
+    payNowSub: '扫码付款',
+    // Sales history
+    ordersToday: '今日订单',
+    salesToday: '今日营业额',
+    recentTxn: '最近交易',
+    noTxnTitle: '暂无交易记录',
+    noTxnBody: '完成订单后将在此显示。',
+    loading: '加载中…',
+    // Menu manager
+    newDish: '+ 新菜品',
+    // Menu modal
+    editDish: '编辑菜品',
+    addDish: '新菜品',
+    photoLabel: '图片',
+    uploadPhoto: '上传图片',
+    replacePhoto: '更换图片',
+    removePhoto: '删除图片',
+    uploading: '上传中…',
+    dishNameEn: '菜品名称（English）',
+    dishNameZh: '中文名称',
+    priceSGD: '价格（新元）',
+    categoryLabel: '分类',
+    cancel: '取消',
+    saveChanges: '保存修改',
+    addToMenu: '添加到菜单',
+    validationError: '请输入名称和有效价格。',
+    // Confirm modal
+    paymentReceived: '收款成功',
+    nextCustomer: '下一位顾客',
+    // Settings
+    settingsLang: '语言',
+    langEn: 'English',
+    langZh: '中文',
+  },
+} as const;
+
+export type TKey = keyof typeof T.en;

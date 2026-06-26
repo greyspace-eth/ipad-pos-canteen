@@ -39,10 +39,10 @@ export default function LoginScreen({ pin, pinError, onDigit, onClear, onBackspa
           </div>
           <div className="flex flex-col items-center gap-[3px]">
             <span className="font-bold text-[24px] text-white tracking-[0.01em] font-grotesk">
-              Hua Kee Cai Png
+              Goh Cai Png
             </span>
             <span className="font-medium text-[13px] text-ink-ghost tracking-[0.22em] uppercase font-grotesk">
-              华记杂菜饭 · Vendor
+              杂菜饭 · Vendor
             </span>
           </div>
         </div>

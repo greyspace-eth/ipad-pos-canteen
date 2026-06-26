@@ -12,7 +12,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { name, price, cat, imageUrl } = body;
+  const { name, nameZh, price, cat, imageUrl } = body;
 
   if (!name || typeof price !== 'number' || !cat) {
     return NextResponse.json({ error: 'name, price, and cat are required' }, { status: 400 });
@@ -21,7 +21,8 @@ export async function POST(req: Request) {
   const item = await prisma.menuItem.create({
     data: {
       name: String(name).trim(),
-      price: Math.round(price), // already in cents
+      nameZh: nameZh ? String(nameZh).trim() : null,
+      price: Math.round(price),
       cat: String(cat),
       imageUrl: imageUrl ?? null,
     },

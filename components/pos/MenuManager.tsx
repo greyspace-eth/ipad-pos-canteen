@@ -1,9 +1,11 @@
 'use client';
 
-import { MenuItem } from '@/types/pos';
+import { MenuItem, Lang } from '@/types/pos';
+import { T } from '@/lib/i18n';
 
 interface Props {
   menu: MenuItem[];
+  lang: Lang;
   onOpenAdd: () => void;
   onEdit: (item: MenuItem) => void;
   onDelete: (id: string) => void;
@@ -20,13 +22,13 @@ const CAT_BG: Record<string, string> = {
   'Staff Price': '#dce8ed',
 };
 
-export default function MenuManager({ menu, onOpenAdd, onEdit, onDelete }: Props) {
+export default function MenuManager({ menu, lang, onOpenAdd, onEdit, onDelete }: Props) {
+  const tr = T[lang];
   return (
     <div className="h-full overflow-y-auto px-9 pt-7 pb-10">
-      {/* Toolbar */}
       <div className="flex items-center justify-between mb-[22px]">
         <span className="font-semibold text-[14px] text-ink-muted font-grotesk">
-          {menu.length} dishes on the menu
+          {lang === 'zh' ? `菜单共 ${menu.length} 件菜品` : `${menu.length} dishes on the menu`}
         </span>
         <button
           onClick={onOpenAdd}
@@ -36,18 +38,16 @@ export default function MenuManager({ menu, onOpenAdd, onEdit, onDelete }: Props
             <line x1="12" y1="5" x2="12" y2="19" strokeLinecap="round" />
             <line x1="5" y1="12" x2="19" y2="12" strokeLinecap="round" />
           </svg>
-          Add dish
+          {tr.newDish}
         </button>
       </div>
 
-      {/* Menu grid */}
       <div className="grid grid-cols-2 gap-[14px]">
         {menu.map((m) => (
           <div
             key={m.id}
             className="flex items-center gap-4 bg-white border-[1.5px] border-sand rounded-[16px] px-4 py-[14px]"
           >
-            {/* Thumbnail */}
             {m.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -66,22 +66,24 @@ export default function MenuManager({ menu, onOpenAdd, onEdit, onDelete }: Props
               />
             )}
 
-            {/* Info */}
-            <div className="flex-1 min-w-0 flex flex-col gap-[5px]">
+            <div className="flex-1 min-w-0 flex flex-col gap-[3px]">
               <span className="font-semibold text-[15px] text-ink truncate font-grotesk">
                 {m.name}
               </span>
-              <span className="self-start font-semibold text-[11px] tracking-[0.04em] text-ink-muted bg-[#f1ece2] px-[9px] py-[2px] rounded-[6px] font-grotesk">
+              {m.nameZh && (
+                <span className="font-semibold text-[13px] text-ink-muted truncate font-grotesk">
+                  {m.nameZh}
+                </span>
+              )}
+              <span className="self-start font-semibold text-[11px] tracking-[0.04em] text-ink-muted bg-[#f1ece2] px-[9px] py-[2px] rounded-[6px] font-grotesk mt-[2px]">
                 {m.cat}
               </span>
             </div>
 
-            {/* Price */}
             <span className="font-mono font-bold text-[17px] text-green-dark">
               {money(m.price)}
             </span>
 
-            {/* Actions */}
             <div className="flex gap-2 ml-[6px]">
               <button
                 onClick={() => onEdit(m)}

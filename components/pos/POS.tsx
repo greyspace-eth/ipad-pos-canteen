@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  AppStatus, Page, MenuItem, HistoryEntry, ConfirmState, Draft, MenuCategory, OrderLine,
+  AppStatus, Page, MenuItem, HistoryEntry, ConfirmState, Draft, MenuCategory, OrderLine, Lang,
 } from '@/types/pos';
+import { T } from '@/lib/i18n';
 import LoginScreen from './LoginScreen';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -12,10 +13,12 @@ import SalesHistory from './SalesHistory';
 import MenuManager from './MenuManager';
 import MenuModal from './MenuModal';
 import ConfirmModal from './ConfirmModal';
+import SettingsPage from './SettingsPage';
 
 interface State {
   appStatus: AppStatus;
   page: Page;
+  lang: Lang;
   pin: string;
   pinError: boolean;
   loginLoading: boolean;
@@ -34,6 +37,7 @@ interface State {
 const INITIAL: State = {
   appStatus: 'loading',
   page: 'operation',
+  lang: 'en',
   pin: '',
   pinError: false,
   loginLoading: false,
@@ -57,7 +61,7 @@ function computeOrder(menu: MenuItem[], order: Record<string, number>) {
     if (q > 0) {
       const sign = m.cat === 'Staff Price' ? -1 : 1;
       totalCents += sign * q * m.price;
-      lines.push({ id: m.id, name: m.name, price: m.price, qty: q, cat: m.cat });
+      lines.push({ id: m.id, name: m.name, nameZh: m.nameZh, price: m.price, qty: q, cat: m.cat });
     }
   });
   const count = lines.reduce((a, l) => a + l.qty, 0);
@@ -100,6 +104,14 @@ export default function POS() {
   );
 
   // ── Bootstrap ────────────────────────────────────────────────────────────
+
+  // Load persisted lang on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('pos-lang') as Lang | null;
+    if (stored === 'en' || stored === 'zh') {
+      setS((prev) => ({ ...prev, lang: stored }));
+    }
+  }, []);
 
   async function loadMenu() {
     update({ menuLoading: true });
@@ -145,15 +157,20 @@ export default function POS() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Language ──────────────────────────────────────────────────────────────
+
+  function changeLang(l: Lang) {
+    localStorage.setItem('pos-lang', l);
+    update({ lang: l });
+  }
+
   // ── Auth ────────────────────────────────────────────────────────────────
 
   function pressDigit(d: string) {
     if (s.pin.length >= 4 || s.loginLoading) return;
     const pin = s.pin + d;
     update({ pin, pinError: false });
-    if (pin.length === 4) {
-      submitPin(pin);
-    }
+    if (pin.length === 4) submitPin(pin);
   }
 
   async function submitPin(pin: string) {
@@ -224,6 +241,7 @@ export default function POS() {
 
       if (res.ok) {
         const newOrder = await res.json();
+        const tr = T[s.lang];
         const histEntry: HistoryEntry = {
           id: newOrder.id,
           time: formatTimeFromDate(new Date()),
@@ -235,7 +253,7 @@ export default function POS() {
         update((prev) => ({
           history: [histEntry, ...prev.history],
           confirm: {
-            methodLabel: method === 'cash' ? 'Cash' : 'PayNow',
+            methodLabel: method === 'cash' ? tr.cash : 'PayNow',
             totalCents: o.totalCents,
             count: o.count,
           },
@@ -253,7 +271,10 @@ export default function POS() {
   // ── Menu CRUD ────────────────────────────────────────────────────────────
 
   function openAdd() {
-    update({ menuModalOpen: true, draftError: '', draft: { id: null, name: '', price: '', cat: 'Fixed Price', imageUrl: null } });
+    update({
+      menuModalOpen: true, draftError: '',
+      draft: { id: null, name: '', nameZh: '', price: '', cat: 'Fixed Price', imageUrl: null },
+    });
   }
 
   function openEdit(item: MenuItem) {
@@ -263,6 +284,7 @@ export default function POS() {
       draft: {
         id: item.id,
         name: item.name,
+        nameZh: item.nameZh ?? '',
         price: (item.price / 100).toFixed(2),
         cat: item.cat,
         imageUrl: item.imageUrl ?? null,
@@ -308,12 +330,17 @@ export default function POS() {
     const name = d.name.trim();
     const priceDollars = parseFloat(d.price);
     if (!name || isNaN(priceDollars) || priceDollars < 0) {
-      update({ draftError: 'Enter a name and a valid price.' });
+      update({ draftError: T[s.lang].validationError });
       return;
     }
     const priceCents = Math.round(priceDollars * 100);
-
-    const body = { name, price: priceCents, cat: d.cat, imageUrl: d.imageUrl ?? null };
+    const body = {
+      name,
+      nameZh: d.nameZh.trim() || null,
+      price: priceCents,
+      cat: d.cat,
+      imageUrl: d.imageUrl ?? null,
+    };
 
     try {
       if (d.id) {
@@ -403,6 +430,7 @@ export default function POS() {
       <div className="flex h-full">
         <Sidebar
           page={s.page}
+          lang={s.lang}
           onNav={(p: Page) => {
             update({ page: p });
             if (p === 'history') loadHistory();
@@ -411,7 +439,7 @@ export default function POS() {
         />
 
         <div className="flex-1 flex flex-col min-w-0">
-          <Header page={s.page} />
+          <Header page={s.page as Exclude<Page, 'login'>} lang={s.lang} />
 
           <div className="flex-1 min-h-0">
             {s.page === 'operation' && (
@@ -421,6 +449,7 @@ export default function POS() {
                 orderCount={o.count}
                 orderEmpty={o.empty}
                 totalCents={o.totalCents}
+                lang={s.lang}
                 onAddItem={addItem}
                 onChangeQty={changeQty}
                 onPayCash={() => choosePayment('cash')}
@@ -428,15 +457,19 @@ export default function POS() {
               />
             )}
             {s.page === 'history' && (
-              <SalesHistory history={s.history} loading={s.historyLoading} />
+              <SalesHistory history={s.history} loading={s.historyLoading} lang={s.lang} />
             )}
             {s.page === 'menu' && (
               <MenuManager
                 menu={s.menu}
+                lang={s.lang}
                 onOpenAdd={openAdd}
                 onEdit={openEdit}
                 onDelete={deleteDish}
               />
+            )}
+            {s.page === 'settings' && (
+              <SettingsPage lang={s.lang} onChangeLang={changeLang} />
             )}
           </div>
         </div>
@@ -447,7 +480,9 @@ export default function POS() {
           draft={s.draft}
           draftError={s.draftError}
           uploading={s.draftUploading}
+          lang={s.lang}
           onChangeName={(v) => setDraftField('name', v)}
+          onChangeNameZh={(v: string) => setDraftField('nameZh', v)}
           onChangePrice={(v) => setDraftField('price', v)}
           onChangeCat={(c) => setDraftField('cat', c)}
           onUploadImage={uploadImage}
@@ -457,7 +492,7 @@ export default function POS() {
         />
       )}
 
-      {s.confirm && <ConfirmModal confirm={s.confirm} onFinish={finishOrder} />}
+      {s.confirm && <ConfirmModal confirm={s.confirm} lang={s.lang} onFinish={finishOrder} />}
     </div>
   );
 }
