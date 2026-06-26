@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Page } from '@/types/pos';
 
 const TITLES: Record<Exclude<Page, 'login'>, string> = {
@@ -12,20 +13,25 @@ interface Props {
   page: Exclude<Page, 'login'>;
 }
 
-function getDateStr() {
-  try {
-    return new Date().toLocaleDateString('en-SG', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    });
-  } catch {
-    return new Date().toDateString();
-  }
-}
-
 export default function Header({ page }: Props) {
-  const dateStr = getDateStr();
+  // Start optimistically online; update after first ping
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    async function ping() {
+      try {
+        const res = await fetch('/api/auth/me', { method: 'GET' });
+        // Any HTTP response (including 401) means server is reachable
+        setOnline(res.status < 500);
+      } catch {
+        setOnline(false);
+      }
+    }
+
+    ping();
+    const id = setInterval(ping, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className="h-[74px] flex-shrink-0 bg-white border-b-[1.5px] border-sand flex items-center justify-between px-8">
@@ -34,12 +40,21 @@ export default function Header({ page }: Props) {
           {TITLES[page]}
         </span>
         <span className="font-medium text-[12px] text-ink-faint tracking-[0.02em] font-grotesk">
-          Hua Kee Cai Png · Stall #14
+          Best Cai Png
         </span>
       </div>
+
       <div className="flex items-center gap-[10px] px-4 py-[9px] border-[1.5px] border-sand rounded-[13px] bg-warm-white">
-        <span className="w-2 h-2 rounded-full bg-green" />
-        <span className="font-mono font-semibold text-[13px] text-ink-mid">{dateStr}</span>
+        <span
+          className="w-2 h-2 rounded-full"
+          style={{ background: online ? '#1f8a5b' : '#c0492f' }}
+        />
+        <span
+          className="font-mono font-semibold text-[13px]"
+          style={{ color: online ? '#1f8a5b' : '#c0492f' }}
+        >
+          {online ? 'LIVE' : 'OFF'}
+        </span>
       </div>
     </div>
   );

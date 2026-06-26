@@ -10,7 +10,7 @@ interface Props {
 }
 
 function money(n: number) {
-  return '$' + (Math.round(n * 100) / 100).toFixed(2);
+  return '$' + (n / 100).toFixed(2);
 }
 
 const CAT_BG: Record<string, string> = {
