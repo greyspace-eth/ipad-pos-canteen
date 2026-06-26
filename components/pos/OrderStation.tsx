@@ -110,7 +110,7 @@ export default function OrderStation({
           if (items.length === 0) return null;
           return (
             <div key={cat}>
-              <div className="flex items-center gap-[10px] mx-[2px] mb-4 mt-8 first:mt-0">
+              <div className="flex items-center gap-[10px] mx-[2px] mb-4 mt-16 first:mt-0">
                 <span className="w-[12px] h-[12px] rounded-[3px]" style={{ background: dotColor }} />
                 <span className="font-bold text-[17px] tracking-[0.12em] uppercase text-ink-muted font-grotesk">
                   {label}
