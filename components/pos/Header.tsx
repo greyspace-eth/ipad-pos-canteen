@@ -40,7 +40,7 @@ export default function Header({ page }: Props) {
           {TITLES[page]}
         </span>
         <span className="font-medium text-[12px] text-ink-faint tracking-[0.02em] font-grotesk">
-          Best Cai Png
+          GOH CAIFAN · 吴
         </span>
       </div>
 

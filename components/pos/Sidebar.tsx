@@ -21,10 +21,14 @@ export default function Sidebar({ page, onNav, onLogout }: Props) {
     <div className="w-[104px] flex-shrink-0 bg-ink-dark flex flex-col items-center px-3 pt-5 pb-5 h-full">
       {/* Top spacer — pushes logo + nav down */}
       <div className="h-[60px] flex-shrink-0" />
+
       {/* Logo */}
-      <div className="w-[58px] h-[58px] rounded-[17px] bg-green flex items-center justify-center font-bold text-[26px] text-white mb-[30px] font-grotesk">
-        饭
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/logo.png"
+        alt="GOH CAIFAN"
+        className="w-[62px] h-[62px] rounded-[17px] object-cover mb-[30px]"
+      />
 
       {/* Nav items */}
       <div className="flex flex-col gap-[10px] w-full">

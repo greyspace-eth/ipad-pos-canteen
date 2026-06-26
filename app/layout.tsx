@@ -17,11 +17,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Hua Kee Cai Png — POS',
-  description: '华记杂菜饭 Vendor POS',
+  title: 'GOH CAIFAN — POS',
+  description: '吴 杂菜饭 Vendor POS',
   appleWebApp: {
     capable: true,
-    title: 'Hua Kee POS',
+    title: 'GOH CAIFAN POS',
     statusBarStyle: 'black-translucent',
   },
   icons: {
