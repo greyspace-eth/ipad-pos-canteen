@@ -10,18 +10,19 @@ export default function ScaleWrapper({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     function recalc() {
-      // Scale to fill the viewport (cover), anchored top-left.
-      // Slight bottom overflow is hidden; no black borders.
-      const scale = Math.max(
+      // Contain mode: scale down to fit any viewport, centred.
+      const scale = Math.min(
         window.innerWidth / DESIGN_W,
         window.innerHeight / DESIGN_H
       );
+      const offsetX = Math.max(0, (window.innerWidth - DESIGN_W * scale) / 2);
+      const offsetY = Math.max(0, (window.innerHeight - DESIGN_H * scale) / 2);
       setStyle({
         transform: `scale(${scale})`,
         transformOrigin: 'top left',
         position: 'absolute',
-        top: 0,
-        left: 0,
+        top: offsetY,
+        left: offsetX,
         width: DESIGN_W,
         height: DESIGN_H,
       });

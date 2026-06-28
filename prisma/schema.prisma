@@ -27,6 +27,7 @@ model Order {
   payment       String      // cash | paynow
   staffDiscount Boolean     @default(false)
   createdAt     DateTime    @default(now())
+  deletedAt     DateTime?
 
   items OrderItem[]
 }

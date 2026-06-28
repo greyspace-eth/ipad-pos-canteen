@@ -34,10 +34,15 @@ export const T = {
     // Sales history
     ordersToday: 'Orders today',
     salesToday: 'Sales today',
+    filterAll: 'All',
     recentTxn: 'Recent transactions',
     noTxnTitle: 'No transactions yet',
     noTxnBody: 'Complete an order to see it here.',
     loading: 'Loading…',
+    deleteEntry: 'Delete',
+    confirmDeleteTitle: 'Delete transaction?',
+    confirmDeleteBody: 'This removes it from today\'s totals.',
+    confirmDeleteYes: 'Yes, delete',
     // Menu manager
     newDish: '+ New dish',
     // Menu modal
@@ -97,10 +102,15 @@ export const T = {
     // Sales history
     ordersToday: '今日订单',
     salesToday: '今日营业额',
+    filterAll: '全部',
     recentTxn: '最近交易',
     noTxnTitle: '暂无交易记录',
     noTxnBody: '完成订单后将在此显示。',
     loading: '加载中…',
+    deleteEntry: '删除',
+    confirmDeleteTitle: '删除此交易？',
+    confirmDeleteBody: '将从今日营业额中移除。',
+    confirmDeleteYes: '确认删除',
     // Menu manager
     newDish: '+ 新菜品',
     // Menu modal

@@ -462,7 +462,14 @@ export default function POS() {
               />
             )}
             {s.page === 'history' && (
-              <SalesHistory history={s.history} loading={s.historyLoading} lang={s.lang} />
+              <SalesHistory
+                history={s.history}
+                loading={s.historyLoading}
+                lang={s.lang}
+                onDeleteEntry={(id) =>
+                  update((prev) => ({ history: prev.history.filter((h) => h.id !== id) }))
+                }
+              />
             )}
             {s.page === 'menu' && (
               <MenuManager
