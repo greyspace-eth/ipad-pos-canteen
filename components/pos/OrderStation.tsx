@@ -14,6 +14,7 @@ interface Props {
   onChangeQty: (id: string, delta: number) => void;
   onPayCash: () => void;
   onPayNow: () => void;
+  onClearOrder: () => void;
 }
 
 const CATEGORY_SECTIONS: { cat: MenuCategory; tKey: 'catStaffPrice' | 'catFixedPrice' | 'catCustom' | 'catOthers'; dotColor: string; bgColor: string }[] = [
@@ -91,6 +92,7 @@ export default function OrderStation({
   onChangeQty,
   onPayCash,
   onPayNow,
+  onClearOrder,
 }: Props) {
   const tr = T[lang];
   const orderQty: Record<string, number> = {};
@@ -133,11 +135,21 @@ export default function OrderStation({
 
       {/* Right — order panel */}
       <div className="w-[500px] flex-shrink-0 bg-white border-l-[1.5px] border-sand flex flex-col h-full">
-        <div className="px-6 pt-[22px] pb-4 border-b-[1.5px] border-sand-light flex items-baseline justify-between">
+        <div className="px-6 pt-[22px] pb-4 border-b-[1.5px] border-sand-light flex items-center justify-between">
           <span className="font-bold text-[26px] text-ink font-grotesk">{tr.currentOrder}</span>
-          <span className="font-mono font-semibold text-[17px] text-ink-muted">
-            {orderCount} {tr.itemsUnit}
-          </span>
+          <div className="flex items-center gap-3">
+            {!orderEmpty && (
+              <button
+                onClick={onClearOrder}
+                className="h-[34px] px-[14px] rounded-[10px] border-[1.5px] border-[#f0d9d2] bg-[#fbf2ef] text-red font-grotesk font-semibold text-[13px] cursor-pointer hover:bg-[#f5e2db] active:bg-[#f5e2db] transition-colors"
+              >
+                {tr.clearAll}
+              </button>
+            )}
+            <span className="font-mono font-semibold text-[17px] text-ink-muted">
+              {orderCount} {tr.itemsUnit}
+            </span>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto min-h-0">

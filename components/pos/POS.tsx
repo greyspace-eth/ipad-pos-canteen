@@ -268,6 +268,10 @@ export default function POS() {
     update({ order: {}, confirm: null });
   }
 
+  function clearOrder() {
+    update({ order: {} });
+  }
+
   // ── Menu CRUD ────────────────────────────────────────────────────────────
 
   function openAdd() {
@@ -454,6 +458,7 @@ export default function POS() {
                 onChangeQty={changeQty}
                 onPayCash={() => choosePayment('cash')}
                 onPayNow={() => choosePayment('paynow')}
+                onClearOrder={clearOrder}
               />
             )}
             {s.page === 'history' && (

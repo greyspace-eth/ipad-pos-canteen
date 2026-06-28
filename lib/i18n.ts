@@ -22,6 +22,7 @@ export const T = {
     catOthers: 'Others',
     // Order panel
     currentOrder: 'Current Order',
+    clearAll: 'Clear all',
     itemsUnit: 'items',
     noDishesTitle: 'No dishes yet',
     noDishesBody: "Tap dishes on the left to build the customer's plate.",
@@ -84,6 +85,7 @@ export const T = {
     catOthers: '其他',
     // Order panel
     currentOrder: '当前订单',
+    clearAll: '清空',
     itemsUnit: '件',
     noDishesTitle: '暂无菜品',
     noDishesBody: '点击左边菜品加入订单。',
