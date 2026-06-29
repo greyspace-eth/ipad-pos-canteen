@@ -13,6 +13,7 @@ import SalesHistory from './SalesHistory';
 import MenuManager from './MenuManager';
 import MenuModal from './MenuModal';
 import ConfirmModal from './ConfirmModal';
+import CashInputModal from './CashInputModal';
 import SettingsPage from './SettingsPage';
 
 interface State {
@@ -28,6 +29,7 @@ interface State {
   confirm: ConfirmState | null;
   history: HistoryEntry[];
   historyLoading: boolean;
+  cashInputOpen: boolean;
   menuModalOpen: boolean;
   draft: Draft | null;
   draftError: string;
@@ -47,6 +49,7 @@ const INITIAL: State = {
   confirm: null,
   history: [],
   historyLoading: false,
+  cashInputOpen: false,
   menuModalOpen: false,
   draft: null,
   draftError: '',
@@ -456,7 +459,7 @@ export default function POS() {
                 lang={s.lang}
                 onAddItem={addItem}
                 onChangeQty={changeQty}
-                onPayCash={() => choosePayment('cash')}
+                onPayCash={() => update({ cashInputOpen: true })}
                 onPayNow={() => choosePayment('paynow')}
                 onClearOrder={clearOrder}
               />
@@ -501,6 +504,15 @@ export default function POS() {
           onClearImage={() => setDraftField('imageUrl', null)}
           onSave={saveDraft}
           onClose={closeModal}
+        />
+      )}
+
+      {s.cashInputOpen && (
+        <CashInputModal
+          totalCents={o.totalCents}
+          lang={s.lang}
+          onConfirm={() => { update({ cashInputOpen: false }); choosePayment('cash'); }}
+          onClose={() => update({ cashInputOpen: false })}
         />
       )}
 
