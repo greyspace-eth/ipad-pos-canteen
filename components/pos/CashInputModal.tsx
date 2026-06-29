@@ -78,7 +78,7 @@ export default function CashInputModal({ totalCents, lang, onConfirm, onClose }:
               className={`h-[52px] rounded-[13px] border-[1.5px] font-grotesk font-bold text-[18px] cursor-pointer transition-colors ${
                 receivedCents === q
                   ? 'bg-ink-dark border-ink-dark text-white'
-                  : 'bg-[#f5f1ea] border-sand text-ink-mid hover:bg-[#efeae0] active:bg-[#ddd8ce]'
+                  : 'bg-[#dceef7] border-[#aed3e8] text-[#1a5f7a] hover:bg-[#c8e4f2] active:bg-[#b8d8ec]'
               }`}
             >
               {fmtQuick(q)}
