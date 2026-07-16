@@ -41,7 +41,7 @@ export default function Header({ page, lang }: Props) {
           {tr[PAGE_KEY[page]]}
         </span>
         <span className="font-medium text-[12px] text-ink-faint tracking-[0.02em] font-grotesk">
-          GOH CAIFAN · 吴
+          CAFEINE · Cf
         </span>
       </div>
 

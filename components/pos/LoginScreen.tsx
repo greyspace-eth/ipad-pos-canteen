@@ -33,17 +33,17 @@ export default function LoginScreen({ pin, pinError, onDigit, onClear, onBackspa
         <div className="flex flex-col items-center gap-[14px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/logo.png"
-            alt="GOH CAIFAN"
+            src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/3375px_cafeine_logo.jpg"
+            alt="CAFÉINE"
             className="w-[78px] h-[78px] rounded-[22px] object-cover"
-            style={{ boxShadow: '0 10px 30px rgba(31,138,91,.35)' }}
+            style={{ boxShadow: '0 10px 30px rgba(0,0,0,.35)' }}
           />
           <div className="flex flex-col items-center gap-[3px]">
             <span className="font-bold text-[24px] text-white tracking-[0.01em] font-grotesk">
-              Goh Cai Png
+              CAFEINE
             </span>
             <span className="font-medium text-[13px] text-ink-ghost tracking-[0.22em] uppercase font-grotesk">
-              杂菜饭 · Vendor
+              CAFEINE · Cf
             </span>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function LoginScreen({ pin, pinError, onDigit, onClear, onBackspa
         </div>
 
         <span className="font-medium text-[12px] text-[#5a544c] tracking-[0.04em] font-grotesk">
-          Demo passcode — 1 2 3 4
+          CAFEINE · Cf
         </span>
       </div>
     </div>

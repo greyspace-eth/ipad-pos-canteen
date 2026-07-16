@@ -26,8 +26,8 @@ export default function Sidebar({ page, lang, onNav, onLogout }: Props) {
 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/logo.png"
-        alt="GOH CAIFAN"
+        src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/3375px_cafeine_logo.jpg"
+        alt="CAFÉINE"
         className="w-[62px] h-[62px] rounded-[17px] object-cover mb-[30px]"
       />
 

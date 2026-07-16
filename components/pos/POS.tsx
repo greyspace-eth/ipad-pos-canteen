@@ -439,8 +439,8 @@ export default function POS() {
         <div className="flex flex-col items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/logo.png"
-            alt="GOH CAIFAN"
+            src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/3375px_cafeine_logo.jpg"
+            alt="CAFÉINE"
             className="w-[58px] h-[58px] rounded-[17px] object-cover"
           />
           <span className="font-medium text-[13px] text-ink-ghost font-grotesk">Loading…</span>

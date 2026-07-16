@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'GOH CAIFAN POS',
-    short_name: 'GOH CAIFAN',
-    description: '杂菜饭 — Vendor Point of Sale',
+    name: 'CAFEINE POS',
+    short_name: 'CAFEINE',
+    description: 'CAFEINE Vendor Point of Sale',
     start_url: '/',
     display: 'standalone',
     orientation: 'landscape',
