@@ -23,7 +23,7 @@ function catStyle(name: string) {
   return { dotColor: '#1f8a5b', bgColor: '#e3eddc', isDiscount: false };
 }
 
-function catLabel(name: string, tr: typeof T.en): string {
+function catLabel(name: string, tr: { catStaffPrice: string; catFixedPrice: string; catCustom: string; catOthers: string }): string {
   if (name === 'Staff Price') return tr.catStaffPrice;
   if (name === 'Fixed Price') return tr.catFixedPrice;
   if (name === 'Custom') return tr.catCustom;
