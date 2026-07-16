@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { Draft, MenuCategory, Lang } from '@/types/pos';
+import { Draft, MenuCategory, Category, Lang } from '@/types/pos';
 import { T } from '@/lib/i18n';
 
 interface Props {
@@ -9,6 +9,7 @@ interface Props {
   draftError: string;
   uploading: boolean;
   lang: Lang;
+  categories: Category[];
   onChangeName: (v: string) => void;
   onChangeNameZh: (v: string) => void;
   onChangePrice: (v: string) => void;
@@ -19,13 +20,12 @@ interface Props {
   onClose: () => void;
 }
 
-const CATS: MenuCategory[] = ['Fixed Price', 'Custom', 'Others', 'Staff Price'];
-
 export default function MenuModal({
   draft,
   draftError,
   uploading,
   lang,
+  categories,
   onChangeName,
   onChangeNameZh,
   onChangePrice,
@@ -152,17 +152,17 @@ export default function MenuModal({
             {tr.categoryLabel}
           </span>
           <div className="grid grid-cols-2 gap-2">
-            {CATS.map((c) => (
+            {categories.map((c) => (
               <button
-                key={c}
-                onClick={() => onChangeCat(c)}
+                key={c.id}
+                onClick={() => onChangeCat(c.name)}
                 className={`h-[44px] border-[1.5px] rounded-[11px] cursor-pointer font-grotesk font-semibold text-[13px] transition-colors ${
-                  draft.cat === c
+                  draft.cat === c.name
                     ? 'border-green bg-green text-white'
                     : 'border-sand bg-warm-white text-ink-mid hover:bg-[#f0ebe1]'
                 }`}
               >
-                {c}
+                {c.name}
               </button>
             ))}
           </div>

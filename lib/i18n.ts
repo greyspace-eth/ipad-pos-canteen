@@ -70,10 +70,23 @@ export const T = {
     // Confirm modal
     paymentReceived: 'Payment received',
     nextCustomer: 'Next customer',
-    // Settings
+    // Settings — language
     settingsLang: 'Language',
     langEn: 'English',
     langZh: '中文',
+    // Settings — categories
+    settingsCat: 'Categories',
+    systemBadge: 'System',
+    addCat: 'Add',
+    newCatPlaceholder: 'Category name',
+    confirmDeleteCat: 'Delete category?',
+    confirmDeleteCatBody: 'Menu items will be moved to "Others".',
+    // Order status
+    voidOrder: 'Void',
+    refundOrder: 'Refund',
+    statusVoided: 'VOIDED',
+    statusRefunded: 'REFUNDED',
+    actionTitle: 'Change transaction status',
   },
   zh: {
     // Sidebar
@@ -144,10 +157,23 @@ export const T = {
     // Confirm modal
     paymentReceived: '收款成功',
     nextCustomer: '下一位顾客',
-    // Settings
+    // Settings — language
     settingsLang: '语言',
     langEn: 'English',
     langZh: '中文',
+    // Settings — categories
+    settingsCat: '分类管理',
+    systemBadge: '系统',
+    addCat: '添加',
+    newCatPlaceholder: '分类名称',
+    confirmDeleteCat: '删除分类？',
+    confirmDeleteCatBody: '此分类下的菜品将移至"其他"。',
+    // Order status
+    voidOrder: '作废',
+    refundOrder: '退款',
+    statusVoided: '已作废',
+    statusRefunded: '已退款',
+    actionTitle: '更改交易状态',
   },
 } as const;
 

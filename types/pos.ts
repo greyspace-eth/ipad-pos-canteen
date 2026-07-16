@@ -1,16 +1,24 @@
 import type { Lang } from '@/lib/i18n';
 
 export type { Lang };
-export type MenuCategory = 'Fixed Price' | 'Custom' | 'Others' | 'Staff Price';
+export type MenuCategory = string;
 export type PaymentMethod = 'cash' | 'paynow';
 export type AppStatus = 'loading' | 'login' | 'app';
 export type Page = 'operation' | 'history' | 'menu' | 'settings';
+export type OrderStatus = 'completed' | 'voided' | 'refunded';
+
+export interface Category {
+  id: string;
+  name: string;
+  sortOrder: number;
+  system: boolean;
+}
 
 export interface MenuItem {
   id: string;
   name: string;
   nameZh?: string | null;
-  price: number; // cents (from DB)
+  price: number;
   cat: MenuCategory;
   imageUrl?: string | null;
   available: boolean;
@@ -19,9 +27,10 @@ export interface MenuItem {
 export interface HistoryEntry {
   id: string;
   time: string;
-  total: number; // cents
+  total: number;
   payment: PaymentMethod;
   staff: boolean;
+  status: OrderStatus;
   items: { name: string; qty: number }[];
 }
 
@@ -35,7 +44,7 @@ export interface Draft {
   id: string | null;
   name: string;
   nameZh: string;
-  price: string; // user input, dollars as string
+  price: string;
   cat: MenuCategory;
   imageUrl?: string | null;
 }
@@ -44,7 +53,7 @@ export interface OrderLine {
   id: string;
   name: string;
   nameZh?: string | null;
-  price: number; // cents
+  price: number;
   qty: number;
   cat: MenuCategory;
 }

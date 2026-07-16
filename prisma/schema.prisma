@@ -21,11 +21,20 @@ model MenuItem {
   orderItems OrderItem[]
 }
 
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  system    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 model Order {
   id            String      @id @default(cuid())
   totalCents    Int
   payment       String      // cash | paynow
   staffDiscount Boolean     @default(false)
+  status        String      @default("completed") // completed | voided | refunded
   createdAt     DateTime    @default(now())
   deletedAt     DateTime?
 

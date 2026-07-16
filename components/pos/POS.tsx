@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  AppStatus, Page, MenuItem, HistoryEntry, ConfirmState, Draft, MenuCategory, OrderLine, Lang,
+  AppStatus, Page, Category, MenuItem, HistoryEntry, ConfirmState,
+  Draft, MenuCategory, OrderLine, Lang, OrderStatus,
 } from '@/types/pos';
 import { T } from '@/lib/i18n';
 import LoginScreen from './LoginScreen';
@@ -23,13 +24,14 @@ interface State {
   pin: string;
   pinError: boolean;
   loginLoading: boolean;
+  categories: Category[];
   menu: MenuItem[];
   menuLoading: boolean;
   order: Record<string, number>;
+  cashInputOpen: boolean;
   confirm: ConfirmState | null;
   history: HistoryEntry[];
   historyLoading: boolean;
-  cashInputOpen: boolean;
   menuModalOpen: boolean;
   draft: Draft | null;
   draftError: string;
@@ -43,13 +45,14 @@ const INITIAL: State = {
   pin: '',
   pinError: false,
   loginLoading: false,
+  categories: [],
   menu: [],
   menuLoading: false,
   order: {},
+  cashInputOpen: false,
   confirm: null,
   history: [],
   historyLoading: false,
-  cashInputOpen: false,
   menuModalOpen: false,
   draft: null,
   draftError: '',
@@ -88,10 +91,8 @@ function mapApiOrders(apiOrders: Record<string, unknown>[]): HistoryEntry[] {
       total: o.totalCents as number,
       payment: (o.payment as string) === 'cash' ? 'cash' : 'paynow',
       staff: o.staffDiscount as boolean,
-      items: items.map((i) => ({
-        name: i.name as string,
-        qty: i.quantity as number,
-      })),
+      status: ((o.status as string) || 'completed') as OrderStatus,
+      items: items.map((i) => ({ name: i.name as string, qty: i.quantity as number })),
     };
   });
 }
@@ -108,13 +109,20 @@ export default function POS() {
 
   // ── Bootstrap ────────────────────────────────────────────────────────────
 
-  // Load persisted lang on mount
   useEffect(() => {
     const stored = localStorage.getItem('pos-lang') as Lang | null;
     if (stored === 'en' || stored === 'zh') {
       setS((prev) => ({ ...prev, lang: stored }));
     }
   }, []);
+
+  async function loadCategories() {
+    const res = await fetch('/api/categories');
+    if (res.ok) {
+      const cats: Category[] = await res.json();
+      update({ categories: cats });
+    }
+  }
 
   async function loadMenu() {
     update({ menuLoading: true });
@@ -147,7 +155,7 @@ export default function POS() {
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
-          await Promise.all([loadMenu(), loadHistory()]);
+          await Promise.all([loadCategories(), loadMenu(), loadHistory()]);
           update({ appStatus: 'app' });
         } else {
           update({ appStatus: 'login' });
@@ -185,7 +193,7 @@ export default function POS() {
         body: JSON.stringify({ pin }),
       });
       if (res.ok) {
-        await Promise.all([loadMenu(), loadHistory()]);
+        await Promise.all([loadCategories(), loadMenu(), loadHistory()]);
         update({ appStatus: 'app', pin: '', loginLoading: false });
       } else {
         update({ pinError: true, loginLoading: false });
@@ -201,7 +209,8 @@ export default function POS() {
     await fetch('/api/auth/logout', { method: 'POST' });
     update({
       appStatus: 'login', pin: '', order: {},
-      confirm: null, menuModalOpen: false, menu: [], history: [],
+      confirm: null, cashInputOpen: false, menuModalOpen: false,
+      menu: [], history: [], categories: [],
     });
   }
 
@@ -219,6 +228,10 @@ export default function POS() {
       else order[id] = q;
       return { order };
     });
+  }
+
+  function clearOrder() {
+    update({ order: {} });
   }
 
   async function choosePayment(method: 'cash' | 'paynow') {
@@ -251,6 +264,7 @@ export default function POS() {
           total: newOrder.totalCents,
           payment: method,
           staff: false,
+          status: 'completed',
           items: o.lines.map((l) => ({ name: l.name, qty: l.qty })),
         };
         update((prev) => ({
@@ -271,16 +285,36 @@ export default function POS() {
     update({ order: {}, confirm: null });
   }
 
-  function clearOrder() {
-    update({ order: {} });
+  // ── Categories ───────────────────────────────────────────────────────────
+
+  async function addCategory(name: string) {
+    const res = await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      const cat: Category = await res.json();
+      update((prev) => ({ categories: [...prev.categories, cat] }));
+    }
+  }
+
+  async function deleteCategory(id: string) {
+    const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      update((prev) => ({ categories: prev.categories.filter((c) => c.id !== id) }));
+      // Reload menu since items may have been reassigned
+      loadMenu();
+    }
   }
 
   // ── Menu CRUD ────────────────────────────────────────────────────────────
 
   function openAdd() {
+    const defaultCat = s.categories.find((c) => !c.system)?.name ?? 'Fixed Price';
     update({
       menuModalOpen: true, draftError: '',
-      draft: { id: null, name: '', nameZh: '', price: '', cat: 'Fixed Price', imageUrl: null },
+      draft: { id: null, name: '', nameZh: '', price: '', cat: defaultCat, imageUrl: null },
     });
   }
 
@@ -360,9 +394,7 @@ export default function POS() {
           const updated: MenuItem = await res.json();
           update((prev) => ({
             menu: prev.menu.map((m) => (m.id === updated.id ? updated : m)),
-            menuModalOpen: false,
-            draft: null,
-            draftError: '',
+            menuModalOpen: false, draft: null, draftError: '',
           }));
         }
       } else {
@@ -375,9 +407,7 @@ export default function POS() {
           const created: MenuItem = await res.json();
           update((prev) => ({
             menu: [...prev.menu, created],
-            menuModalOpen: false,
-            draft: null,
-            draftError: '',
+            menuModalOpen: false, draft: null, draftError: '',
           }));
         }
       }
@@ -407,9 +437,12 @@ export default function POS() {
     return (
       <div className="w-[1366px] h-[1024px] bg-ink-dark flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-[58px] h-[58px] rounded-[17px] bg-green flex items-center justify-center font-bold text-[26px] text-white font-grotesk">
-            饭
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://pub-38ab79da39164b16a64630cefe4a7851.r2.dev/logo.png"
+            alt="GOH CAIFAN"
+            className="w-[58px] h-[58px] rounded-[17px] object-cover"
+          />
           <span className="font-medium text-[13px] text-ink-ghost font-grotesk">Loading…</span>
         </div>
       </div>
@@ -452,6 +485,7 @@ export default function POS() {
             {s.page === 'operation' && (
               <OrderStation
                 menu={s.menu}
+                categories={s.categories}
                 orderLines={o.lines}
                 orderCount={o.count}
                 orderEmpty={o.empty}
@@ -469,8 +503,10 @@ export default function POS() {
                 history={s.history}
                 loading={s.historyLoading}
                 lang={s.lang}
-                onDeleteEntry={(id) =>
-                  update((prev) => ({ history: prev.history.filter((h) => h.id !== id) }))
+                onStatusChange={(id, status) =>
+                  update((prev) => ({
+                    history: prev.history.map((h) => h.id === id ? { ...h, status } : h),
+                  }))
                 }
               />
             )}
@@ -484,7 +520,13 @@ export default function POS() {
               />
             )}
             {s.page === 'settings' && (
-              <SettingsPage lang={s.lang} onChangeLang={changeLang} />
+              <SettingsPage
+                lang={s.lang}
+                categories={s.categories}
+                onChangeLang={changeLang}
+                onAddCategory={addCategory}
+                onDeleteCategory={deleteCategory}
+              />
             )}
           </div>
         </div>
@@ -496,6 +538,7 @@ export default function POS() {
           draftError={s.draftError}
           uploading={s.draftUploading}
           lang={s.lang}
+          categories={s.categories}
           onChangeName={(v) => setDraftField('name', v)}
           onChangeNameZh={(v: string) => setDraftField('nameZh', v)}
           onChangePrice={(v) => setDraftField('price', v)}

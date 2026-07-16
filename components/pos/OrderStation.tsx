@@ -1,10 +1,11 @@
 'use client';
 
-import { MenuItem, MenuCategory, OrderLine, Lang } from '@/types/pos';
+import { Category, MenuItem, OrderLine, Lang } from '@/types/pos';
 import { T } from '@/lib/i18n';
 
 interface Props {
   menu: MenuItem[];
+  categories: Category[];
   orderLines: OrderLine[];
   orderCount: number;
   orderEmpty: boolean;
@@ -17,12 +18,18 @@ interface Props {
   onClearOrder: () => void;
 }
 
-const CATEGORY_SECTIONS: { cat: MenuCategory; tKey: 'catStaffPrice' | 'catFixedPrice' | 'catCustom' | 'catOthers'; dotColor: string; bgColor: string }[] = [
-  { cat: 'Staff Price', tKey: 'catStaffPrice', dotColor: '#1a6fa0', bgColor: '#dce8ed' },
-  { cat: 'Fixed Price', tKey: 'catFixedPrice', dotColor: '#1f8a5b', bgColor: '#e3eddc' },
-  { cat: 'Custom',      tKey: 'catCustom',     dotColor: '#c0492f', bgColor: '#f1ddd6' },
-  { cat: 'Others',      tKey: 'catOthers',     dotColor: '#8b857b', bgColor: '#e8e3ef' },
-];
+function catStyle(name: string) {
+  if (name === 'Staff Price') return { dotColor: '#1a6fa0', bgColor: '#dce8ed', isDiscount: true };
+  return { dotColor: '#1f8a5b', bgColor: '#e3eddc', isDiscount: false };
+}
+
+function catLabel(name: string, tr: typeof T.en): string {
+  if (name === 'Staff Price') return tr.catStaffPrice;
+  if (name === 'Fixed Price') return tr.catFixedPrice;
+  if (name === 'Custom') return tr.catCustom;
+  if (name === 'Others') return tr.catOthers;
+  return name;
+}
 
 function money(cents: number) {
   return '$' + (cents / 100).toFixed(2);
@@ -82,17 +89,8 @@ function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, onAdd 
 }
 
 export default function OrderStation({
-  menu,
-  orderLines,
-  orderCount,
-  orderEmpty,
-  totalCents,
-  lang,
-  onAddItem,
-  onChangeQty,
-  onPayCash,
-  onPayNow,
-  onClearOrder,
+  menu, categories, orderLines, orderCount, orderEmpty, totalCents,
+  lang, onAddItem, onChangeQty, onPayCash, onPayNow, onClearOrder,
 }: Props) {
   const tr = T[lang];
   const orderQty: Record<string, number> = {};
@@ -102,16 +100,16 @@ export default function OrderStation({
     <div className="flex h-full">
       {/* Left — menu grid */}
       <div className="flex-1 min-w-0 overflow-y-auto px-7 pt-6 pb-10">
-        {CATEGORY_SECTIONS.map(({ cat, tKey, dotColor, bgColor }) => {
-          const items = menu.filter((m) => m.cat === cat && m.available !== false);
+        {categories.map(({ name }) => {
+          const items = menu.filter((m) => m.cat === name && m.available !== false);
           if (items.length === 0) return null;
-          const isDiscount = cat === 'Staff Price';
+          const { dotColor, bgColor, isDiscount } = catStyle(name);
           return (
-            <div key={cat} className="mt-20 first:mt-0">
+            <div key={name} className="mt-20 first:mt-0">
               <div className="flex items-center gap-[10px] mx-[2px] mb-6">
                 <span className="w-[12px] h-[12px] rounded-[3px]" style={{ background: dotColor }} />
                 <span className="font-bold text-[17px] tracking-[0.12em] uppercase text-ink-muted font-grotesk">
-                  {tr[tKey]}
+                  {catLabel(name, tr)}
                 </span>
               </div>
               <div className="grid grid-cols-4 gap-[13px]">
