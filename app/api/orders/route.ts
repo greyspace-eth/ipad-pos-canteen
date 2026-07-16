@@ -27,11 +27,18 @@ export async function POST(req: Request) {
       payment: String(payment),
       staffDiscount: Boolean(staffDiscount),
       items: {
-        create: items.map((i: { menuItemId?: string; name: string; quantity: number; unitCents: number }) => ({
+        create: items.map((i: {
+          menuItemId?: string;
+          name: string;
+          quantity: number;
+          unitCents: number;
+          modifiers?: { optionId: string; optionName: string; priceCents: number }[];
+        }) => ({
           menuItemId: i.menuItemId ?? null,
           name: String(i.name),
           quantity: Number(i.quantity),
           unitCents: Math.round(i.unitCents),
+          modifiers: i.modifiers?.length ? JSON.stringify(i.modifiers) : null,
         })),
       },
     },

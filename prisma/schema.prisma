@@ -18,7 +18,40 @@ model MenuItem {
   available Boolean  @default(true)
   createdAt DateTime @default(now())
 
-  orderItems OrderItem[]
+  orderItems     OrderItem[]
+  modifierGroups MenuItemModifierGroup[]
+}
+
+model ModifierGroup {
+  id           String   @id @default(cuid())
+  name         String
+  required     Boolean  @default(false)
+  singleSelect Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  options ModifierOption[]
+  items   MenuItemModifierGroup[]
+}
+
+model ModifierOption {
+  id         String        @id @default(cuid())
+  groupId    String
+  group      ModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name       String
+  priceCents Int           @default(0)
+  isDefault  Boolean       @default(false)
+  sortOrder  Int           @default(0)
+}
+
+model MenuItemModifierGroup {
+  menuItemId      String
+  modifierGroupId String
+  sortOrder       Int           @default(0)
+  menuItem        MenuItem      @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  modifierGroup   ModifierGroup @relation(fields: [modifierGroupId], references: [id], onDelete: Cascade)
+
+  @@id([menuItemId, modifierGroupId])
 }
 
 model Category {
@@ -50,4 +83,5 @@ model OrderItem {
   name       String   // snapshot at time of sale
   quantity   Int
   unitCents  Int
+  modifiers  String?  // JSON: SelectedModifier[]
 }

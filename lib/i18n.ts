@@ -87,6 +87,28 @@ export const T = {
     statusVoided: 'VOIDED',
     statusRefunded: 'REFUNDED',
     actionTitle: 'Change transaction status',
+    // Modifier modal
+    addToOrder: 'Add to Order',
+    selectionRequired: 'Please make a selection',
+    requiredBadge: 'Required',
+    free: 'Free',
+    // Modifier manager
+    modifierGroupsTitle: 'Modifier Groups',
+    newGroupBtn: '+ New Group',
+    groupNamePlaceholder: 'Group name (e.g. Milk Type)',
+    requiredToggle: 'Required',
+    singleSelectLabel: 'Single',
+    multiSelectLabel: 'Multi',
+    addOptionBtn: 'Add option',
+    optionNamePlaceholder: 'Option name',
+    defaultBadge: 'Default',
+    noGroupsYet: 'No modifier groups yet. Create one to add options like milk type or temperature.',
+    // Menu modal — modifier attachment
+    attachModifiers: 'Modifier Groups',
+    noGroupsToAttach: 'No groups available. Create them in the Menu → Modifiers tab.',
+    // Menu manager tabs
+    itemsTab: 'Items',
+    modifiersTab: 'Modifiers',
   },
   zh: {
     // Sidebar
@@ -174,6 +196,28 @@ export const T = {
     statusVoided: '已作废',
     statusRefunded: '已退款',
     actionTitle: '更改交易状态',
+    // Modifier modal
+    addToOrder: '加入订单',
+    selectionRequired: '请选择一个选项',
+    requiredBadge: '必选',
+    free: '免费',
+    // Modifier manager
+    modifierGroupsTitle: '加料组',
+    newGroupBtn: '+ 新建加料组',
+    groupNamePlaceholder: '组名（例：牛奶类型）',
+    requiredToggle: '必选',
+    singleSelectLabel: '单选',
+    multiSelectLabel: '多选',
+    addOptionBtn: '添加选项',
+    optionNamePlaceholder: '选项名称',
+    defaultBadge: '默认',
+    noGroupsYet: '暂无加料组。创建一个来添加如牛奶类型、温度等选项。',
+    // Menu modal — modifier attachment
+    attachModifiers: '加料选项',
+    noGroupsToAttach: '暂无加料组。请在菜单 → 加料标签中创建。',
+    // Menu manager tabs
+    itemsTab: '菜品',
+    modifiersTab: '加料',
   },
 } as const;
 

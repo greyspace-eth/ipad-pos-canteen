@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   AppStatus, Page, Category, MenuItem, HistoryEntry, ConfirmState,
   Draft, MenuCategory, OrderLine, Lang, OrderStatus,
+  ModifierGroup, ModifierOption, SelectedModifier,
 } from '@/types/pos';
 import { T } from '@/lib/i18n';
 import LoginScreen from './LoginScreen';
@@ -15,6 +16,7 @@ import MenuManager from './MenuManager';
 import MenuModal from './MenuModal';
 import ConfirmModal from './ConfirmModal';
 import CashInputModal from './CashInputModal';
+import ModifierModal from './ModifierModal';
 import SettingsPage from './SettingsPage';
 
 interface State {
@@ -27,7 +29,10 @@ interface State {
   categories: Category[];
   menu: MenuItem[];
   menuLoading: boolean;
-  order: Record<string, number>;
+  modifierGroups: ModifierGroup[];
+  menuTab: 'items' | 'modifiers';
+  orderLines: OrderLine[];
+  modifierPending: MenuItem | null;
   cashInputOpen: boolean;
   confirm: ConfirmState | null;
   history: HistoryEntry[];
@@ -48,7 +53,10 @@ const INITIAL: State = {
   categories: [],
   menu: [],
   menuLoading: false,
-  order: {},
+  modifierGroups: [],
+  menuTab: 'items',
+  orderLines: [],
+  modifierPending: null,
   cashInputOpen: false,
   confirm: null,
   history: [],
@@ -59,16 +67,12 @@ const INITIAL: State = {
   draftUploading: false,
 };
 
-function computeOrder(menu: MenuItem[], order: Record<string, number>) {
+function computeFromLines(lines: OrderLine[]) {
   let totalCents = 0;
-  const lines: OrderLine[] = [];
-  menu.forEach((m) => {
-    const q = order[m.id] || 0;
-    if (q > 0) {
-      const sign = m.cat === 'Staff Price' ? -1 : 1;
-      totalCents += sign * q * m.price;
-      lines.push({ id: m.id, name: m.name, nameZh: m.nameZh, price: m.price, qty: q, cat: m.cat });
-    }
+  lines.forEach((l) => {
+    const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
+    const sign = l.cat === 'Staff Price' ? -1 : 1;
+    totalCents += sign * (l.price + modTotal) * l.qty;
   });
   const count = lines.reduce((a, l) => a + l.qty, 0);
   return { lines, totalCents: Math.max(0, totalCents), count, empty: lines.length === 0 };
@@ -92,7 +96,16 @@ function mapApiOrders(apiOrders: Record<string, unknown>[]): HistoryEntry[] {
       payment: (o.payment as string) === 'cash' ? 'cash' : 'paynow',
       staff: o.staffDiscount as boolean,
       status: ((o.status as string) || 'completed') as OrderStatus,
-      items: items.map((i) => ({ name: i.name as string, qty: i.quantity as number })),
+      items: items.map((i) => {
+        let modifiers: string | undefined;
+        if (i.modifiers) {
+          try {
+            const mods = JSON.parse(i.modifiers as string) as SelectedModifier[];
+            if (mods.length > 0) modifiers = mods.map((m) => m.optionName).join(', ');
+          } catch { /* ignore */ }
+        }
+        return { name: i.name as string, qty: i.quantity as number, modifiers };
+      }),
     };
   });
 }
@@ -137,6 +150,14 @@ export default function POS() {
     }
   }
 
+  async function loadModifierGroups() {
+    const res = await fetch('/api/modifier-groups');
+    if (res.ok) {
+      const groups: ModifierGroup[] = await res.json();
+      update({ modifierGroups: groups });
+    }
+  }
+
   async function loadHistory() {
     update({ historyLoading: true });
     try {
@@ -155,7 +176,7 @@ export default function POS() {
       try {
         const res = await fetch('/api/auth/me');
         if (res.ok) {
-          await Promise.all([loadCategories(), loadMenu(), loadHistory()]);
+          await Promise.all([loadCategories(), loadMenu(), loadModifierGroups(), loadHistory()]);
           update({ appStatus: 'app' });
         } else {
           update({ appStatus: 'login' });
@@ -193,7 +214,7 @@ export default function POS() {
         body: JSON.stringify({ pin }),
       });
       if (res.ok) {
-        await Promise.all([loadCategories(), loadMenu(), loadHistory()]);
+        await Promise.all([loadCategories(), loadMenu(), loadModifierGroups(), loadHistory()]);
         update({ appStatus: 'app', pin: '', loginLoading: false });
       } else {
         update({ pinError: true, loginLoading: false });
@@ -208,34 +229,54 @@ export default function POS() {
   async function doLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
     update({
-      appStatus: 'login', pin: '', order: {},
-      confirm: null, cashInputOpen: false, menuModalOpen: false,
-      menu: [], history: [], categories: [],
+      appStatus: 'login', pin: '', orderLines: [],
+      confirm: null, cashInputOpen: false, menuModalOpen: false, modifierPending: null,
+      menu: [], history: [], categories: [], modifierGroups: [],
     });
   }
 
   // ── Order ────────────────────────────────────────────────────────────────
 
-  function addItem(id: string) {
-    update((prev) => ({ order: { ...prev.order, [id]: (prev.order[id] || 0) + 1 } }));
+  function tapItem(item: MenuItem) {
+    const groups = item.modifierGroups ?? [];
+    if (groups.length > 0) {
+      update({ modifierPending: item });
+    } else {
+      commitItem(item, []);
+    }
   }
 
-  function changeQty(id: string, delta: number) {
+  function commitItem(item: MenuItem, modifiers: SelectedModifier[]) {
+    const sortedIds = [...modifiers].sort((a, b) => a.optionId.localeCompare(b.optionId)).map((m) => m.optionId).join(',');
+    const lineKey = sortedIds ? `${item.id}:${sortedIds}` : item.id;
     update((prev) => {
-      const order = { ...prev.order };
-      const q = (order[id] || 0) + delta;
-      if (q <= 0) delete order[id];
-      else order[id] = q;
-      return { order };
+      const existing = prev.orderLines.find((l) => l.lineKey === lineKey);
+      if (existing) {
+        return { orderLines: prev.orderLines.map((l) => l.lineKey === lineKey ? { ...l, qty: l.qty + 1 } : l) };
+      }
+      return {
+        orderLines: [...prev.orderLines, {
+          lineKey, id: item.id, name: item.name, nameZh: item.nameZh,
+          price: item.price, qty: 1, cat: item.cat, modifiers,
+        }],
+      };
     });
   }
 
+  function changeQty(lineKey: string, delta: number) {
+    update((prev) => ({
+      orderLines: prev.orderLines
+        .map((l) => l.lineKey === lineKey ? { ...l, qty: l.qty + delta } : l)
+        .filter((l) => l.qty > 0),
+    }));
+  }
+
   function clearOrder() {
-    update({ order: {} });
+    update({ orderLines: [] });
   }
 
   async function choosePayment(method: 'cash' | 'paynow') {
-    const o = computeOrder(s.menu, s.order);
+    const o = computeFromLines(s.orderLines);
     if (o.empty) return;
 
     try {
@@ -245,13 +286,17 @@ export default function POS() {
         body: JSON.stringify({
           totalCents: o.totalCents,
           payment: method,
-          staffDiscount: false,
-          items: o.lines.map((l) => ({
-            menuItemId: l.id,
-            name: l.name,
-            quantity: l.qty,
-            unitCents: l.price,
-          })),
+          staffDiscount: o.lines.some((l) => l.cat === 'Staff Price'),
+          items: o.lines.map((l) => {
+            const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
+            return {
+              menuItemId: l.id,
+              name: l.name,
+              quantity: l.qty,
+              unitCents: l.price + modTotal,
+              modifiers: l.modifiers,
+            };
+          }),
         }),
       });
 
@@ -265,7 +310,11 @@ export default function POS() {
           payment: method,
           staff: false,
           status: 'completed',
-          items: o.lines.map((l) => ({ name: l.name, qty: l.qty })),
+          items: o.lines.map((l) => ({
+            name: l.name,
+            qty: l.qty,
+            modifiers: l.modifiers.length > 0 ? l.modifiers.map((m) => m.optionName).join(', ') : undefined,
+          })),
         };
         update((prev) => ({
           history: [histEntry, ...prev.history],
@@ -282,7 +331,7 @@ export default function POS() {
   }
 
   function finishOrder() {
-    update({ order: {}, confirm: null });
+    update({ orderLines: [], confirm: null });
   }
 
   // ── Categories ───────────────────────────────────────────────────────────
@@ -303,9 +352,52 @@ export default function POS() {
     const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
     if (res.ok) {
       update((prev) => ({ categories: prev.categories.filter((c) => c.id !== id) }));
-      // Reload menu since items may have been reassigned
       loadMenu();
     }
+  }
+
+  // ── Modifier Groups ───────────────────────────────────────────────────────
+
+  function handleGroupCreated(group: ModifierGroup) {
+    update((prev) => ({ modifierGroups: [...prev.modifierGroups, group] }));
+  }
+
+  function handleGroupUpdated(group: ModifierGroup) {
+    update((prev) => ({
+      modifierGroups: prev.modifierGroups.map((g) => g.id === group.id ? group : g),
+    }));
+  }
+
+  function handleGroupDeleted(id: string) {
+    update((prev) => ({ modifierGroups: prev.modifierGroups.filter((g) => g.id !== id) }));
+    // Reload menu since items may have lost attached groups
+    loadMenu();
+  }
+
+  function handleOptionCreated(groupId: string, option: ModifierOption) {
+    update((prev) => ({
+      modifierGroups: prev.modifierGroups.map((g) =>
+        g.id === groupId ? { ...g, options: [...g.options, option] } : g
+      ),
+    }));
+  }
+
+  function handleOptionUpdated(groupId: string, option: ModifierOption) {
+    update((prev) => ({
+      modifierGroups: prev.modifierGroups.map((g) =>
+        g.id === groupId
+          ? { ...g, options: g.options.map((o) => o.id === option.id ? option : o) }
+          : g
+      ),
+    }));
+  }
+
+  function handleOptionDeleted(groupId: string, optionId: string) {
+    update((prev) => ({
+      modifierGroups: prev.modifierGroups.map((g) =>
+        g.id === groupId ? { ...g, options: g.options.filter((o) => o.id !== optionId) } : g
+      ),
+    }));
   }
 
   // ── Menu CRUD ────────────────────────────────────────────────────────────
@@ -314,7 +406,7 @@ export default function POS() {
     const defaultCat = s.categories.find((c) => !c.system)?.name ?? 'Fixed Price';
     update({
       menuModalOpen: true, draftError: '',
-      draft: { id: null, name: '', nameZh: '', price: '', cat: defaultCat, imageUrl: null },
+      draft: { id: null, name: '', nameZh: '', price: '', cat: defaultCat, imageUrl: null, attachedGroupIds: [] },
     });
   }
 
@@ -329,6 +421,7 @@ export default function POS() {
         price: (item.price / 100).toFixed(2),
         cat: item.cat,
         imageUrl: item.imageUrl ?? null,
+        attachedGroupIds: (item.modifierGroups ?? []).map((g) => g.id),
       },
     });
   }
@@ -342,6 +435,15 @@ export default function POS() {
       draft: prev.draft ? { ...prev.draft, [k]: v } : prev.draft,
       draftError: '',
     }));
+  }
+
+  function toggleDraftGroup(groupId: string) {
+    update((prev) => {
+      if (!prev.draft) return {};
+      const ids = prev.draft.attachedGroupIds;
+      const next = ids.includes(groupId) ? ids.filter((id) => id !== groupId) : [...ids, groupId];
+      return { draft: { ...prev.draft, attachedGroupIds: next } };
+    });
   }
 
   async function uploadImage(file: File) {
@@ -381,6 +483,7 @@ export default function POS() {
       price: priceCents,
       cat: d.cat,
       imageUrl: d.imageUrl ?? null,
+      attachedGroupIds: d.attachedGroupIds,
     };
 
     try {
@@ -420,11 +523,10 @@ export default function POS() {
     try {
       const res = await fetch(`/api/menu/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        update((prev) => {
-          const order = { ...prev.order };
-          delete order[id];
-          return { menu: prev.menu.filter((m) => m.id !== id), order };
-        });
+        update((prev) => ({
+          menu: prev.menu.filter((m) => m.id !== id),
+          orderLines: prev.orderLines.filter((l) => l.id !== id),
+        }));
       }
     } catch {
       // no-op
@@ -463,7 +565,7 @@ export default function POS() {
     );
   }
 
-  const o = computeOrder(s.menu, s.order);
+  const o = computeFromLines(s.orderLines);
 
   return (
     <div className="w-[1366px] h-[1024px] relative overflow-hidden font-grotesk text-ink bg-cream">
@@ -491,7 +593,7 @@ export default function POS() {
                 orderEmpty={o.empty}
                 totalCents={o.totalCents}
                 lang={s.lang}
-                onAddItem={addItem}
+                onTapItem={tapItem}
                 onChangeQty={changeQty}
                 onPayCash={() => update({ cashInputOpen: true })}
                 onPayNow={() => choosePayment('paynow')}
@@ -513,10 +615,19 @@ export default function POS() {
             {s.page === 'menu' && (
               <MenuManager
                 menu={s.menu}
+                modifierGroups={s.modifierGroups}
                 lang={s.lang}
+                menuTab={s.menuTab}
+                onTabChange={(tab) => update({ menuTab: tab })}
                 onOpenAdd={openAdd}
                 onEdit={openEdit}
                 onDelete={deleteDish}
+                onGroupCreated={handleGroupCreated}
+                onGroupUpdated={handleGroupUpdated}
+                onGroupDeleted={handleGroupDeleted}
+                onOptionCreated={handleOptionCreated}
+                onOptionUpdated={handleOptionUpdated}
+                onOptionDeleted={handleOptionDeleted}
               />
             )}
             {s.page === 'settings' && (
@@ -539,14 +650,28 @@ export default function POS() {
           uploading={s.draftUploading}
           lang={s.lang}
           categories={s.categories}
+          modifierGroups={s.modifierGroups}
           onChangeName={(v) => setDraftField('name', v)}
           onChangeNameZh={(v: string) => setDraftField('nameZh', v)}
           onChangePrice={(v) => setDraftField('price', v)}
           onChangeCat={(c) => setDraftField('cat', c)}
+          onToggleGroup={toggleDraftGroup}
           onUploadImage={uploadImage}
           onClearImage={() => setDraftField('imageUrl', null)}
           onSave={saveDraft}
           onClose={closeModal}
+        />
+      )}
+
+      {s.modifierPending && (
+        <ModifierModal
+          item={s.modifierPending}
+          lang={s.lang}
+          onConfirm={(modifiers) => {
+            commitItem(s.modifierPending!, modifiers);
+            update({ modifierPending: null });
+          }}
+          onCancel={() => update({ modifierPending: null })}
         />
       )}
 

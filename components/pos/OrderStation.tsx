@@ -11,8 +11,8 @@ interface Props {
   orderEmpty: boolean;
   totalCents: number;
   lang: Lang;
-  onAddItem: (id: string) => void;
-  onChangeQty: (id: string, delta: number) => void;
+  onTapItem: (item: MenuItem) => void;
+  onChangeQty: (lineKey: string, delta: number) => void;
   onPayCash: () => void;
   onPayNow: () => void;
   onClearOrder: () => void;
@@ -35,6 +35,11 @@ function money(cents: number) {
   return '$' + (cents / 100).toFixed(2);
 }
 
+function modMoney(cents: number) {
+  if (cents === 0) return '';
+  return (cents > 0 ? '+' : '') + '$' + (Math.abs(cents) / 100).toFixed(2);
+}
+
 interface MenuCardProps {
   name: string;
   priceCents: number;
@@ -42,13 +47,14 @@ interface MenuCardProps {
   imageUrl?: string | null;
   bgColor: string;
   isDiscount: boolean;
-  onAdd: () => void;
+  hasModifiers: boolean;
+  onTap: () => void;
 }
 
-function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, onAdd }: MenuCardProps) {
+function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, hasModifiers, onTap }: MenuCardProps) {
   return (
     <button
-      onClick={onAdd}
+      onClick={onTap}
       className="relative flex flex-col text-left p-0 border-[1.5px] border-sand rounded-[16px] bg-white cursor-pointer overflow-hidden font-grotesk active:scale-[0.96] transition-transform duration-100"
     >
       {imageUrl ? (
@@ -68,12 +74,14 @@ function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, onAdd 
 
       <div className="px-[14px] pt-[11px] pb-[13px] flex flex-col gap-[6px] flex-1">
         <span className="font-semibold text-[18px] leading-[1.15] text-ink">{name}</span>
-        <span
-          className="font-mono font-bold text-[19px] mt-auto"
-          style={{ color: isDiscount ? '#c0492f' : '#17714a' }}
-        >
-          {isDiscount ? '−' : ''}{money(priceCents)}
-        </span>
+        <div className="flex items-center gap-[6px] mt-auto">
+          <span className="font-mono font-bold text-[19px]" style={{ color: isDiscount ? '#c0492f' : '#17714a' }}>
+            {isDiscount ? '−' : ''}{money(priceCents)}
+          </span>
+          {hasModifiers && (
+            <span className="font-mono text-[11px] text-ink-ghost bg-[#f1ece2] px-[5px] py-[2px] rounded-[4px]">+opt</span>
+          )}
+        </div>
       </div>
 
       {qty > 0 && (
@@ -90,11 +98,13 @@ function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, onAdd 
 
 export default function OrderStation({
   menu, categories, orderLines, orderCount, orderEmpty, totalCents,
-  lang, onAddItem, onChangeQty, onPayCash, onPayNow, onClearOrder,
+  lang, onTapItem, onChangeQty, onPayCash, onPayNow, onClearOrder,
 }: Props) {
   const tr = T[lang];
-  const orderQty: Record<string, number> = {};
-  orderLines.forEach((l) => { orderQty[l.id] = l.qty; });
+
+  // Sum qty per menu item id for card badges
+  const itemQty: Record<string, number> = {};
+  orderLines.forEach((l) => { itemQty[l.id] = (itemQty[l.id] ?? 0) + l.qty; });
 
   return (
     <div className="flex h-full">
@@ -118,11 +128,12 @@ export default function OrderStation({
                     key={item.id}
                     name={lang === 'zh' && item.nameZh ? item.nameZh : item.name}
                     priceCents={item.price}
-                    qty={orderQty[item.id] || 0}
+                    qty={itemQty[item.id] ?? 0}
                     imageUrl={item.imageUrl}
                     bgColor={bgColor}
                     isDiscount={isDiscount}
-                    onAdd={() => onAddItem(item.id)}
+                    hasModifiers={(item.modifierGroups?.length ?? 0) > 0}
+                    onTap={() => onTapItem(item)}
                   />
                 ))}
               </div>
@@ -139,7 +150,7 @@ export default function OrderStation({
             {!orderEmpty && (
               <button
                 onClick={onClearOrder}
-                className="h-[34px] px-[14px] rounded-[10px] border-[1.5px] border-[#f0d9d2] bg-[#fbf2ef] text-red font-grotesk font-semibold text-[13px] cursor-pointer hover:bg-[#f5e2db] active:bg-[#f5e2db] transition-colors"
+                className="h-[34px] px-[14px] rounded-[10px] border-[1.5px] border-[#f0d9d2] bg-[#fbf2ef] text-red font-grotesk font-semibold text-[13px] cursor-pointer hover:bg-[#f5e2db] transition-colors"
               >
                 {tr.clearAll}
               </button>
@@ -160,40 +171,56 @@ export default function OrderStation({
                 </svg>
               </div>
               <span className="font-semibold text-[19px] text-ink-faint font-grotesk">{tr.noDishesTitle}</span>
-              <span className="font-normal text-[16px] text-ink-ghost max-w-[230px] leading-[1.5] font-grotesk">
-                {tr.noDishesBody}
-              </span>
+              <span className="font-normal text-[16px] text-ink-ghost max-w-[230px] leading-[1.5] font-grotesk">{tr.noDishesBody}</span>
             </div>
           ) : (
             <div className="py-[6px]">
               {orderLines.map((l) => {
                 const isDiscount = l.cat === 'Staff Price';
                 const displayName = lang === 'zh' && l.nameZh ? l.nameZh : l.name;
+                const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
+                const unitTotal = l.price + modTotal;
                 return (
-                  <div key={l.id} className="flex items-center gap-3 px-[22px] py-[15px]">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-[20px] text-ink truncate font-grotesk">{displayName}</div>
-                      <div
-                        className="font-mono font-semibold text-[17px] mt-[3px]"
-                        style={{ color: isDiscount ? '#c0492f' : '#17714a' }}
-                      >
-                        {isDiscount ? '−' : ''}{money(l.price * l.qty)}
+                  <div key={l.lineKey} className="px-[22px] py-[14px] border-b-[1px] border-[#f1ece2] last:border-b-0">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-[20px] text-ink font-grotesk">{displayName}</div>
+                        {/* Modifier sub-lines */}
+                        {l.modifiers.length > 0 && (
+                          <div className="mt-[4px] flex flex-col gap-[2px]">
+                            {l.modifiers.map((m) => (
+                              <div key={m.optionId} className="flex items-center gap-[6px]">
+                                <span className="text-[11px] text-ink-ghost">·</span>
+                                <span className="font-medium text-[13px] text-ink-muted font-grotesk">{m.optionName}</span>
+                                {m.priceCents !== 0 && (
+                                  <span className="font-mono text-[12px] text-ink-ghost">{modMoney(m.priceCents)}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div
+                          className="font-mono font-semibold text-[17px] mt-[6px]"
+                          style={{ color: isDiscount ? '#c0492f' : '#17714a' }}
+                        >
+                          {isDiscount ? '−' : ''}{money(unitTotal * l.qty)}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center border-[1.5px] border-sand rounded-[14px] overflow-hidden">
-                      <button
-                        onClick={() => onChangeQty(l.id, -1)}
-                        className="w-[50px] h-[50px] border-none bg-warm-white font-bold text-[28px] text-ink cursor-pointer hover:bg-[#ece6da] active:bg-[#ece6da] transition-colors"
-                      >
-                        −
-                      </button>
-                      <span className="w-[45px] text-center font-mono font-bold text-[20px] text-ink">{l.qty}</span>
-                      <button
-                        onClick={() => onChangeQty(l.id, 1)}
-                        className="w-[50px] h-[50px] border-none bg-warm-white font-bold text-[28px] text-ink cursor-pointer hover:bg-[#ece6da] active:bg-[#ece6da] transition-colors"
-                      >
-                        +
-                      </button>
+                      <div className="flex items-center border-[1.5px] border-sand rounded-[14px] overflow-hidden flex-shrink-0">
+                        <button
+                          onClick={() => onChangeQty(l.lineKey, -1)}
+                          className="w-[50px] h-[50px] border-none bg-warm-white font-bold text-[28px] text-ink cursor-pointer hover:bg-[#ece6da] transition-colors"
+                        >
+                          −
+                        </button>
+                        <span className="w-[45px] text-center font-mono font-bold text-[20px] text-ink">{l.qty}</span>
+                        <button
+                          onClick={() => onChangeQty(l.lineKey, 1)}
+                          className="w-[50px] h-[50px] border-none bg-warm-white font-bold text-[28px] text-ink cursor-pointer hover:bg-[#ece6da] transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
