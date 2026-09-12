@@ -170,14 +170,6 @@ export default function ModifierModal({ item, lang, onConfirm, onCancel }: Props
                             {money(opt.priceCents)}
                           </span>
                         )}
-                        {opt.priceCents === 0 && opt.isDefault && (
-                          <span
-                            className="font-mono text-[11px]"
-                            style={{ opacity: isSelected ? 0.8 : 0.5 }}
-                          >
-                            {tr.free}
-                          </span>
-                        )}
                       </button>
                     );
                   })}
