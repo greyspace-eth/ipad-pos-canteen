@@ -3,6 +3,7 @@ import type { Lang } from '@/lib/i18n';
 export type { Lang };
 export type MenuCategory = string;
 export type PaymentMethod = 'cash' | 'paynow';
+export type OrderType = 'dine_in' | 'takeaway';
 export type AppStatus = 'loading' | 'login' | 'app';
 export type Page = 'operation' | 'history' | 'menu' | 'settings';
 export type OrderStatus = 'completed' | 'voided' | 'refunded';
@@ -53,6 +54,7 @@ export interface HistoryEntry {
   time: string;
   total: number;
   payment: PaymentMethod;
+  orderType: OrderType;
   staff: boolean;
   status: OrderStatus;
   items: { name: string; qty: number; modifiers?: string }[];
@@ -60,6 +62,7 @@ export interface HistoryEntry {
 
 export interface ConfirmState {
   methodLabel: string;
+  orderTypeLabel: string;
   totalCents: number;
   count: number;
 }

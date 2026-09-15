@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   AppStatus, Page, Category, MenuItem, HistoryEntry, ConfirmState,
-  Draft, MenuCategory, OrderLine, Lang, OrderStatus,
+  Draft, MenuCategory, OrderLine, Lang, OrderStatus, OrderType,
   ModifierGroup, ModifierOption, SelectedModifier,
 } from '@/types/pos';
 import { T } from '@/lib/i18n';
@@ -32,6 +32,7 @@ interface State {
   modifierGroups: ModifierGroup[];
   menuTab: 'items' | 'modifiers';
   orderLines: OrderLine[];
+  orderType: OrderType;
   modifierPending: MenuItem | null;
   cashInputOpen: boolean;
   confirm: ConfirmState | null;
@@ -56,6 +57,7 @@ const INITIAL: State = {
   modifierGroups: [],
   menuTab: 'items',
   orderLines: [],
+  orderType: 'dine_in',
   modifierPending: null,
   cashInputOpen: false,
   confirm: null,
@@ -94,6 +96,7 @@ function mapApiOrders(apiOrders: Record<string, unknown>[]): HistoryEntry[] {
       time: formatTimeFromDate(new Date(o.createdAt as string)),
       total: o.totalCents as number,
       payment: (o.payment as string) === 'cash' ? 'cash' : 'paynow',
+      orderType: (o.orderType as string) === 'takeaway' ? 'takeaway' : 'dine_in',
       staff: o.staffDiscount as boolean,
       status: ((o.status as string) || 'completed') as OrderStatus,
       items: items.map((i) => {
@@ -286,6 +289,7 @@ export default function POS() {
         body: JSON.stringify({
           totalCents: o.totalCents,
           payment: method,
+          orderType: s.orderType,
           staffDiscount: o.lines.some((l) => l.cat === 'Staff Price'),
           items: o.lines.map((l) => {
             const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
@@ -308,6 +312,7 @@ export default function POS() {
           time: formatTimeFromDate(new Date()),
           total: newOrder.totalCents,
           payment: method,
+          orderType: s.orderType,
           staff: false,
           status: 'completed',
           items: o.lines.map((l) => ({
@@ -320,6 +325,7 @@ export default function POS() {
           history: [histEntry, ...prev.history],
           confirm: {
             methodLabel: method === 'cash' ? tr.cash : 'PayNow',
+            orderTypeLabel: s.orderType === 'takeaway' ? tr.takeaway : tr.dineIn,
             totalCents: o.totalCents,
             count: o.count,
           },
@@ -331,7 +337,7 @@ export default function POS() {
   }
 
   function finishOrder() {
-    update({ orderLines: [], confirm: null });
+    update({ orderLines: [], orderType: 'dine_in', confirm: null });
   }
 
   // ── Categories ───────────────────────────────────────────────────────────
@@ -592,9 +598,11 @@ export default function POS() {
                 orderCount={o.count}
                 orderEmpty={o.empty}
                 totalCents={o.totalCents}
+                orderType={s.orderType}
                 lang={s.lang}
                 onTapItem={tapItem}
                 onChangeQty={changeQty}
+                onSetOrderType={(t) => update({ orderType: t })}
                 onPayCash={() => update({ cashInputOpen: true })}
                 onPayNow={() => choosePayment('paynow')}
                 onClearOrder={clearOrder}

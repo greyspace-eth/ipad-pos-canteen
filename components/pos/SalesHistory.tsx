@@ -140,6 +140,12 @@ export default function SalesHistory({ history, loading, lang, onStatusChange }:
                 )}
               </div>
 
+              {h.orderType === 'takeaway' && (
+                <span className="flex-shrink-0 font-semibold text-[12px] text-[#9a6c00] bg-[#fef8e8] px-[14px] py-[7px] rounded-[10px] font-grotesk">
+                  {tr.takeaway}
+                </span>
+              )}
+
               {h.payment === 'cash' ? (
                 <span className="flex-shrink-0 font-semibold text-[12px] text-ink-mid bg-[#efeae0] px-[14px] py-[7px] rounded-[10px] font-grotesk">
                   {tr.cash}

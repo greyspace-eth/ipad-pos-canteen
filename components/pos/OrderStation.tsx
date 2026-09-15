@@ -1,6 +1,6 @@
 'use client';
 
-import { Category, MenuItem, OrderLine, Lang } from '@/types/pos';
+import { Category, MenuItem, OrderLine, Lang, OrderType } from '@/types/pos';
 import { T } from '@/lib/i18n';
 
 interface Props {
@@ -10,9 +10,11 @@ interface Props {
   orderCount: number;
   orderEmpty: boolean;
   totalCents: number;
+  orderType: OrderType;
   lang: Lang;
   onTapItem: (item: MenuItem) => void;
   onChangeQty: (lineKey: string, delta: number) => void;
+  onSetOrderType: (type: OrderType) => void;
   onPayCash: () => void;
   onPayNow: () => void;
   onClearOrder: () => void;
@@ -97,8 +99,8 @@ function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, hasMod
 }
 
 export default function OrderStation({
-  menu, categories, orderLines, orderCount, orderEmpty, totalCents,
-  lang, onTapItem, onChangeQty, onPayCash, onPayNow, onClearOrder,
+  menu, categories, orderLines, orderCount, orderEmpty, totalCents, orderType,
+  lang, onTapItem, onChangeQty, onSetOrderType, onPayCash, onPayNow, onClearOrder,
 }: Props) {
   const tr = T[lang];
 
@@ -236,6 +238,31 @@ export default function OrderStation({
             <span className="font-mono font-bold text-[48px] text-green-dark leading-none tracking-[-0.02em]">
               {money(totalCents)}
             </span>
+          </div>
+
+          <div className="flex items-center h-[46px] rounded-[13px] border-[1.5px] border-sand overflow-hidden font-grotesk">
+            <button
+              onClick={() => onSetOrderType('dine_in')}
+              className="flex-1 h-full font-bold text-[15px] cursor-pointer transition-colors"
+              style={
+                orderType === 'dine_in'
+                  ? { backgroundColor: '#2C1A0E', color: '#fff' }
+                  : { backgroundColor: 'transparent', color: '#6B4C36' }
+              }
+            >
+              {tr.dineIn}
+            </button>
+            <button
+              onClick={() => onSetOrderType('takeaway')}
+              className="flex-1 h-full font-bold text-[15px] cursor-pointer transition-colors"
+              style={
+                orderType === 'takeaway'
+                  ? { backgroundColor: '#2C1A0E', color: '#fff' }
+                  : { backgroundColor: 'transparent', color: '#6B4C36' }
+              }
+            >
+              {tr.takeaway}
+            </button>
           </div>
 
           <div className="flex gap-3 mt-1">

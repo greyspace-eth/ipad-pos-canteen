@@ -15,7 +15,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { totalCents, payment, staffDiscount, items } = body;
+  const { totalCents, payment, orderType, staffDiscount, items } = body;
 
   if (!totalCents || !payment || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: 'Invalid order payload' }, { status: 400 });
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
     data: {
       totalCents: Math.round(totalCents),
       payment: String(payment),
+      orderType: orderType === 'takeaway' ? 'takeaway' : 'dine_in',
       staffDiscount: Boolean(staffDiscount),
       items: {
         create: items.map((i: {

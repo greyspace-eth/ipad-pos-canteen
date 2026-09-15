@@ -26,7 +26,7 @@ export default function ConfirmModal({ confirm, lang, onFinish }: Props) {
         <div className="flex flex-col items-center gap-[5px]">
           <span className="font-bold text-[23px] text-ink font-grotesk">{tr.paymentReceived}</span>
           <span className="font-medium text-[14px] text-ink-muted font-grotesk">
-            {confirm.count} {tr.itemsUnit} · {confirm.methodLabel}
+            {confirm.count} {tr.itemsUnit} · {confirm.methodLabel} · {confirm.orderTypeLabel}
           </span>
         </div>
 

@@ -66,6 +66,7 @@ model Order {
   id            String      @id @default(cuid())
   totalCents    Int
   payment       String      // cash | paynow
+  orderType     String      @default("dine_in") // dine_in | takeaway
   staffDiscount Boolean     @default(false)
   status        String      @default("completed") // completed | voided | refunded
   createdAt     DateTime    @default(now())
