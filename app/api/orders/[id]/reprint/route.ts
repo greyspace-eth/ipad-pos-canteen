@@ -18,6 +18,7 @@ export async function POST(
   }
 
   await queuePrintJob({
+    type: 'receipt',
     orderNo: order.orderNo,
     mode: order.orderType === 'takeaway' ? 'TAKEAWAY' : 'DINE-IN',
     items: order.items.map((i) => {

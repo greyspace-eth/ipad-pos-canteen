@@ -88,6 +88,17 @@ function formatTimeFromDate(date: Date): string {
   }
 }
 
+function formatPrintedAt(date: Date): string {
+  try {
+    return date.toLocaleString('en-SG', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true,
+    });
+  } catch {
+    return date.toLocaleString();
+  }
+}
+
 function mapApiOrders(apiOrders: Record<string, unknown>[]): HistoryEntry[] {
   return apiOrders.map((o) => {
     const items = (o.items as Record<string, unknown>[]) ?? [];
@@ -310,13 +321,15 @@ export default function POS() {
         const newOrder = await res.json();
 
         // Best-effort: a failed print job shouldn't block the order, which already succeeded.
+        const mode = s.orderType === 'dine_in' ? 'DINE-IN' : 'TAKEAWAY';
         try {
           await fetch('/api/print', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              type: 'receipt',
               orderNo: newOrder.orderNo,
-              mode: s.orderType === 'dine_in' ? 'DINE-IN' : 'TAKEAWAY',
+              mode,
               items: o.lines.map((l) => {
                 const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
                 return {
@@ -330,6 +343,27 @@ export default function POS() {
               payment: method === 'cash' ? 'CASH' : 'PAYNOW',
               cashReceived: method === 'cash' ? (cashReceivedCents ?? 0) / 100 : undefined,
               cashier: 'admin',
+            }),
+          });
+        } catch {
+          // no-op — printing is best-effort, order already succeeded
+        }
+
+        // Kitchen ticket — no prices, just what to make.
+        try {
+          await fetch('/api/print', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'kitchen',
+              orderNo: newOrder.orderNo,
+              mode,
+              printedAt: formatPrintedAt(new Date()),
+              items: o.lines.map((l) => ({
+                qty: l.qty,
+                name: l.name,
+                modifiers: l.modifiers.map((m) => m.optionName),
+              })),
             }),
           });
         } catch {
