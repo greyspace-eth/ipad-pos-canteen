@@ -278,7 +278,7 @@ export default function POS() {
     update({ orderLines: [] });
   }
 
-  async function choosePayment(method: 'cash' | 'paynow') {
+  async function choosePayment(method: 'cash' | 'paynow', cashReceivedCents?: number) {
     const o = computeFromLines(s.orderLines);
     if (o.empty) return;
 
@@ -326,6 +326,7 @@ export default function POS() {
               }),
               total: o.totalCents / 100,
               payment: method === 'cash' ? 'CASH' : 'PAYNOW',
+              cashReceived: method === 'cash' ? (cashReceivedCents ?? 0) / 100 : undefined,
               cashier: 'admin',
             }),
           });
@@ -714,7 +715,7 @@ export default function POS() {
         <CashInputModal
           totalCents={o.totalCents}
           lang={s.lang}
-          onConfirm={() => { update({ cashInputOpen: false }); choosePayment('cash'); }}
+          onConfirm={(receivedCents) => { update({ cashInputOpen: false }); choosePayment('cash', receivedCents); }}
           onClose={() => update({ cashInputOpen: false })}
         />
       )}

@@ -7,7 +7,7 @@ import { T } from '@/lib/i18n';
 interface Props {
   totalCents: number;
   lang: Lang;
-  onConfirm: () => void;
+  onConfirm: (receivedCents: number) => void;
   onClose: () => void;
 }
 
@@ -131,7 +131,7 @@ export default function CashInputModal({ totalCents, lang, onConfirm, onClose }:
             {tr.cancel}
           </button>
           <button
-            onClick={onConfirm}
+            onClick={() => onConfirm(receivedCents)}
             disabled={!isEnough}
             className="flex-1 h-[62px] rounded-[14px] border-none bg-ink-dark text-white font-grotesk font-bold text-[18px] cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.98] transition-transform"
           >
