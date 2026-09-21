@@ -23,6 +23,10 @@ export default function ConfirmModal({ confirm, lang, onFinish }: Props) {
           </svg>
         </div>
 
+        <span className="font-mono font-bold text-[13px] tracking-[0.08em] text-ink-ghost bg-[#f1ece2] px-[12px] py-[5px] rounded-[8px]">
+          {tr.orderNoLabel} {confirm.orderNo}
+        </span>
+
         <div className="flex flex-col items-center gap-[5px]">
           <span className="font-bold text-[23px] text-ink font-grotesk">{tr.paymentReceived}</span>
           <span className="font-medium text-[14px] text-ink-muted font-grotesk">

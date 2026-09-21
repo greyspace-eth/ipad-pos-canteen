@@ -93,6 +93,7 @@ function mapApiOrders(apiOrders: Record<string, unknown>[]): HistoryEntry[] {
     const items = (o.items as Record<string, unknown>[]) ?? [];
     return {
       id: o.id as string,
+      orderNo: (o.orderNo as string) ?? '000',
       time: formatTimeFromDate(new Date(o.createdAt as string)),
       total: o.totalCents as number,
       payment: (o.payment as string) === 'cash' ? 'cash' : 'paynow',
@@ -313,7 +314,7 @@ export default function POS() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              orderNo: (newOrder.id as string).slice(-6).toUpperCase(),
+              orderNo: newOrder.orderNo,
               mode: s.orderType === 'dine_in' ? 'DINE-IN' : 'TAKEAWAY',
               items: o.lines.map((l) => {
                 const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
@@ -337,6 +338,7 @@ export default function POS() {
         const tr = T[s.lang];
         const histEntry: HistoryEntry = {
           id: newOrder.id,
+          orderNo: newOrder.orderNo,
           time: formatTimeFromDate(new Date()),
           total: newOrder.totalCents,
           payment: method,
@@ -352,6 +354,7 @@ export default function POS() {
         update((prev) => ({
           history: [histEntry, ...prev.history],
           confirm: {
+            orderNo: newOrder.orderNo,
             methodLabel: method === 'cash' ? tr.cash : 'PayNow',
             orderTypeLabel: s.orderType === 'takeaway' ? tr.takeaway : tr.dineIn,
             totalCents: o.totalCents,

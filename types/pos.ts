@@ -51,6 +51,7 @@ export interface MenuItem {
 
 export interface HistoryEntry {
   id: string;
+  orderNo: string;
   time: string;
   total: number;
   payment: PaymentMethod;
@@ -61,6 +62,7 @@ export interface HistoryEntry {
 }
 
 export interface ConfirmState {
+  orderNo: string;
   methodLabel: string;
   orderTypeLabel: string;
   totalCents: number;

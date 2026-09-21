@@ -64,6 +64,7 @@ model Category {
 
 model Order {
   id            String      @id @default(cuid())
+  orderNo       String      @default("000") // daily sequence, SGT, resets at midnight — e.g. "001"
   totalCents    Int
   payment       String      // cash | paynow
   orderType     String      @default("dine_in") // dine_in | takeaway

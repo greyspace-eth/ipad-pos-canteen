@@ -123,8 +123,9 @@ export default function SalesHistory({ history, loading, lang, onStatusChange }:
               className="flex items-center gap-4 bg-white border-[1.5px] border-sand rounded-[16px] px-[22px] py-[18px] mb-3"
               style={statusStyle ? { backgroundColor: statusStyle.bg, borderColor: 'transparent' } : undefined}
             >
-              <div className="w-[74px] flex-shrink-0 font-mono font-bold text-[14px] text-ink">
-                {h.time}
+              <div className="w-[74px] flex-shrink-0 flex flex-col gap-[2px]">
+                <span className="font-mono font-bold text-[14px] text-ink">{h.time}</span>
+                <span className="font-mono text-[11px] text-ink-ghost">#{h.orderNo}</span>
               </div>
               <div className="flex-1 min-w-0 flex flex-col gap-[4px]">
                 <span className="font-medium text-[14px] text-ink-mid leading-[1.45] font-grotesk">

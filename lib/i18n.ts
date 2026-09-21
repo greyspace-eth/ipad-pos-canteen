@@ -70,6 +70,7 @@ export const T = {
     addToMenu: 'Add to menu',
     validationError: 'Enter a name and a valid price.',
     // Confirm modal
+    orderNoLabel: 'Order',
     paymentReceived: 'Payment received',
     nextCustomer: 'Next customer',
     // Settings — language
@@ -181,6 +182,7 @@ export const T = {
     addToMenu: '添加到菜单',
     validationError: '请输入名称和有效价格。',
     // Confirm modal
+    orderNoLabel: '订单号',
     paymentReceived: '收款成功',
     nextCustomer: '下一位顾客',
     // Settings — language
