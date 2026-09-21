@@ -306,6 +306,33 @@ export default function POS() {
 
       if (res.ok) {
         const newOrder = await res.json();
+
+        // Best-effort: a failed print job shouldn't block the order, which already succeeded.
+        try {
+          await fetch('/api/print', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderNo: (newOrder.id as string).slice(-6).toUpperCase(),
+              mode: s.orderType === 'dine_in' ? 'DINE-IN' : 'TAKEAWAY',
+              items: o.lines.map((l) => {
+                const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
+                return {
+                  qty: l.qty,
+                  name: l.name,
+                  total: (l.price + modTotal) * l.qty / 100,
+                  modifiers: l.modifiers.map((m) => m.optionName),
+                };
+              }),
+              total: o.totalCents / 100,
+              payment: method === 'cash' ? 'CASH' : 'PAYNOW',
+              cashier: 'admin',
+            }),
+          });
+        } catch {
+          // no-op — printing is best-effort, order already succeeded
+        }
+
         const tr = T[s.lang];
         const histEntry: HistoryEntry = {
           id: newOrder.id,
