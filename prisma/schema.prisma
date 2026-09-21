@@ -63,15 +63,16 @@ model Category {
 }
 
 model Order {
-  id            String      @id @default(cuid())
-  orderNo       String      @default("000") // daily sequence, SGT, resets at midnight — e.g. "001"
-  totalCents    Int
-  payment       String      // cash | paynow
-  orderType     String      @default("dine_in") // dine_in | takeaway
-  staffDiscount Boolean     @default(false)
-  status        String      @default("completed") // completed | voided | refunded
-  createdAt     DateTime    @default(now())
-  deletedAt     DateTime?
+  id                String      @id @default(cuid())
+  orderNo           String      @default("000") // daily sequence, SGT, resets at midnight — e.g. "001"
+  totalCents        Int
+  payment           String      // cash | paynow
+  cashReceivedCents Int?        // cash payments only — amount tendered
+  orderType         String      @default("dine_in") // dine_in | takeaway
+  staffDiscount     Boolean     @default(false)
+  status            String      @default("completed") // completed | voided | refunded
+  createdAt         DateTime    @default(now())
+  deletedAt         DateTime?
 
   items OrderItem[]
 }

@@ -31,6 +31,7 @@ export async function POST(
     }),
     total: order.totalCents / 100,
     payment: order.payment === 'cash' ? 'CASH' : 'PAYNOW',
+    cashReceived: order.cashReceivedCents != null ? order.cashReceivedCents / 100 : undefined,
     cashier: 'admin',
     reprint: true,
   });

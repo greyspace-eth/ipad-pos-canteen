@@ -30,7 +30,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { totalCents, payment, orderType, staffDiscount, items } = body;
+  const { totalCents, payment, cashReceivedCents, orderType, staffDiscount, items } = body;
 
   if (!totalCents || !payment || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: 'Invalid order payload' }, { status: 400 });
@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       orderNo,
       totalCents: Math.round(totalCents),
       payment: String(payment),
+      cashReceivedCents: payment === 'cash' && typeof cashReceivedCents === 'number' ? Math.round(cashReceivedCents) : null,
       orderType: orderType === 'takeaway' ? 'takeaway' : 'dine_in',
       staffDiscount: Boolean(staffDiscount),
       items: {

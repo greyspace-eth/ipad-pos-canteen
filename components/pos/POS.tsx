@@ -290,6 +290,7 @@ export default function POS() {
         body: JSON.stringify({
           totalCents: o.totalCents,
           payment: method,
+          cashReceivedCents,
           orderType: s.orderType,
           staffDiscount: o.lines.some((l) => l.cat === 'Staff Price'),
           items: o.lines.map((l) => {
