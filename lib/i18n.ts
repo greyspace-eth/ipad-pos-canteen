@@ -87,6 +87,7 @@ export const T = {
     // Order status
     voidOrder: 'Void',
     refundOrder: 'Refund',
+    reprintReceipt: 'Reprint receipt',
     statusVoided: 'VOIDED',
     statusRefunded: 'REFUNDED',
     actionTitle: 'Change transaction status',
@@ -199,6 +200,7 @@ export const T = {
     // Order status
     voidOrder: '作废',
     refundOrder: '退款',
+    reprintReceipt: '重打小票',
     statusVoided: '已作废',
     statusRefunded: '已退款',
     actionTitle: '更改交易状态',

@@ -28,6 +28,7 @@ export default function SalesHistory({ history, loading, lang, onStatusChange }:
   const [filter, setFilter] = useState<Filter>('all');
   const [actionId, setActionId] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [reprintingId, setReprintingId] = useState<string | null>(null);
 
   const filtered = filter === 'all' ? history : history.filter((h) => h.payment === filter);
 
@@ -53,6 +54,15 @@ export default function SalesHistory({ history, loading, lang, onStatusChange }:
   }
 
   const actionEntry = actionId ? history.find((h) => h.id === actionId) : null;
+
+  async function handleReprint(id: string) {
+    setReprintingId(id);
+    try {
+      await fetch(`/api/orders/${id}/reprint`, { method: 'POST' });
+    } finally {
+      setReprintingId(null);
+    }
+  }
 
   const filterBtn = (f: Filter, label: string) => (
     <button
@@ -161,6 +171,21 @@ export default function SalesHistory({ history, loading, lang, onStatusChange }:
                 style={{ color: statusStyle ? statusStyle.text : '#17714a' }}>
                 {money(h.total)}
               </div>
+
+              {/* Reprint receipt */}
+              <button
+                onClick={() => handleReprint(h.id)}
+                disabled={reprintingId === h.id}
+                title={tr.reprintReceipt}
+                aria-label={tr.reprintReceipt}
+                className="w-[36px] h-[36px] flex-shrink-0 flex items-center justify-center rounded-[10px] border-[1.5px] border-sand bg-[#f5f1ea] text-ink-muted cursor-pointer hover:bg-[#efeae0] active:bg-[#efeae0] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 9V2h12v7" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" strokeLinecap="round" strokeLinejoin="round" />
+                  <rect x="6" y="14" width="12" height="8" />
+                </svg>
+              </button>
 
               {/* Action button — only for completed orders */}
               {h.status === 'completed' ? (
