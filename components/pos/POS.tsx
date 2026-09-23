@@ -69,15 +69,26 @@ const INITIAL: State = {
   draftUploading: false,
 };
 
+// "Promotion" items are created through the same dollar-denominated price field as everything
+// else (so no special form UI is needed), which means a "50% Discount" priced at "50" is stored
+// as 5000 cents — dividing by 100 recovers the intended percent. These lines discount whatever
+// else is in the order rather than contributing their own fixed amount.
 function computeFromLines(lines: OrderLine[]) {
-  let totalCents = 0;
+  let baseCents = 0;
+  let promoPercent = 0;
   lines.forEach((l) => {
+    if (l.cat === 'Promotion') {
+      promoPercent = l.price / 100;
+      return;
+    }
     const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
     const sign = l.cat === 'Staff Price' ? -1 : 1;
-    totalCents += sign * (l.price + modTotal) * l.qty;
+    baseCents += sign * (l.price + modTotal) * l.qty;
   });
+  const promoDiscountCents = promoPercent > 0 ? Math.round(baseCents * (promoPercent / 100)) : 0;
+  const totalCents = Math.max(0, baseCents - promoDiscountCents);
   const count = lines.reduce((a, l) => a + l.qty, 0);
-  return { lines, totalCents: Math.max(0, totalCents), count, empty: lines.length === 0 };
+  return { lines, totalCents, promoDiscountCents, count, empty: lines.length === 0 };
 }
 
 function formatTimeFromDate(date: Date): string {
@@ -267,6 +278,8 @@ export default function POS() {
     update((prev) => {
       const existing = prev.orderLines.find((l) => l.lineKey === lineKey);
       if (existing) {
+        // Percent-discount lines (e.g. "50% Discount") are a single toggle, not a stackable quantity.
+        if (item.cat === 'Promotion') return {};
         return { orderLines: prev.orderLines.map((l) => l.lineKey === lineKey ? { ...l, qty: l.qty + 1 } : l) };
       }
       return {
@@ -305,6 +318,9 @@ export default function POS() {
           orderType: s.orderType,
           staffDiscount: o.lines.some((l) => l.cat === 'Staff Price'),
           items: o.lines.map((l) => {
+            if (l.cat === 'Promotion') {
+              return { menuItemId: l.id, name: l.name, quantity: 1, unitCents: -o.promoDiscountCents, modifiers: [] };
+            }
             const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
             return {
               menuItemId: l.id,
@@ -331,6 +347,9 @@ export default function POS() {
               orderNo: newOrder.orderNo,
               mode,
               items: o.lines.map((l) => {
+                if (l.cat === 'Promotion') {
+                  return { qty: 1, name: l.name, total: -o.promoDiscountCents / 100, modifiers: [] };
+                }
                 const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
                 return {
                   qty: l.qty,
@@ -359,11 +378,14 @@ export default function POS() {
               orderNo: newOrder.orderNo,
               mode,
               printedAt: formatPrintedAt(new Date()),
-              items: o.lines.map((l) => ({
-                qty: l.qty,
-                name: l.name,
-                modifiers: l.modifiers.map((m) => m.optionName),
-              })),
+              // Discount lines (Staff Price, Promotion) aren't food — the kitchen has nothing to make for them.
+              items: o.lines
+                .filter((l) => l.cat !== 'Staff Price' && l.cat !== 'Promotion')
+                .map((l) => ({
+                  qty: l.qty,
+                  name: l.name,
+                  modifiers: l.modifiers.map((m) => m.optionName),
+                })),
             }),
           });
         } catch {
@@ -664,6 +686,7 @@ export default function POS() {
                 orderCount={o.count}
                 orderEmpty={o.empty}
                 totalCents={o.totalCents}
+                promoDiscountCents={o.promoDiscountCents}
                 orderType={s.orderType}
                 lang={s.lang}
                 onTapItem={tapItem}

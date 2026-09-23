@@ -77,7 +77,7 @@ export default function SettingsPage({
             >
               <span
                 className="w-[10px] h-[10px] rounded-[3px] flex-shrink-0"
-                style={{ background: c.name === 'Staff Price' ? '#1a6fa0' : '#1f8a5b' }}
+                style={{ background: c.name === 'Staff Price' ? '#1a6fa0' : c.name === 'Promotion' ? '#c9781f' : '#1f8a5b' }}
               />
               <span className="flex-1 font-semibold text-[15px] text-ink font-grotesk">{c.name}</span>
               {c.system ? (

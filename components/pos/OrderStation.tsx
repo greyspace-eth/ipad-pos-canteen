@@ -10,6 +10,7 @@ interface Props {
   orderCount: number;
   orderEmpty: boolean;
   totalCents: number;
+  promoDiscountCents: number;
   orderType: OrderType;
   lang: Lang;
   onTapItem: (item: MenuItem) => void;
@@ -21,8 +22,9 @@ interface Props {
 }
 
 function catStyle(name: string) {
-  if (name === 'Staff Price') return { dotColor: '#1a6fa0', bgColor: '#dce8ed', isDiscount: true };
-  return { dotColor: '#1f8a5b', bgColor: '#e3eddc', isDiscount: false };
+  if (name === 'Staff Price') return { dotColor: '#1a6fa0', bgColor: '#dce8ed', isDiscount: true, isPercent: false };
+  if (name === 'Promotion') return { dotColor: '#c9781f', bgColor: '#fbeedd', isDiscount: true, isPercent: true };
+  return { dotColor: '#1f8a5b', bgColor: '#e3eddc', isDiscount: false, isPercent: false };
 }
 
 function catLabel(name: string, tr: { catStaffPrice: string; catFixedPrice: string; catCustom: string; catOthers: string }): string {
@@ -49,11 +51,12 @@ interface MenuCardProps {
   imageUrl?: string | null;
   bgColor: string;
   isDiscount: boolean;
+  isPercent: boolean;
   hasModifiers: boolean;
   onTap: () => void;
 }
 
-function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, hasModifiers, onTap }: MenuCardProps) {
+function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, isPercent, hasModifiers, onTap }: MenuCardProps) {
   return (
     <button
       onClick={onTap}
@@ -78,7 +81,7 @@ function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, hasMod
         <span className="font-semibold text-[18px] leading-[1.15] text-ink">{name}</span>
         <div className="flex items-center gap-[6px] mt-auto">
           <span className="font-mono font-bold text-[19px]" style={{ color: isDiscount ? '#c0492f' : '#17714a' }}>
-            {isDiscount ? '−' : ''}{money(priceCents)}
+            {isDiscount ? '−' : ''}{isPercent ? `${priceCents / 100}%` : money(priceCents)}
           </span>
           {hasModifiers && (
             <span className="font-mono text-[11px] text-ink-ghost bg-[#f1ece2] px-[5px] py-[2px] rounded-[4px]">+opt</span>
@@ -99,7 +102,7 @@ function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, hasMod
 }
 
 export default function OrderStation({
-  menu, categories, orderLines, orderCount, orderEmpty, totalCents, orderType,
+  menu, categories, orderLines, orderCount, orderEmpty, totalCents, promoDiscountCents, orderType,
   lang, onTapItem, onChangeQty, onSetOrderType, onPayCash, onPayNow, onClearOrder,
 }: Props) {
   const tr = T[lang];
@@ -115,7 +118,7 @@ export default function OrderStation({
         {categories.map(({ name }) => {
           const items = menu.filter((m) => m.cat === name && m.available !== false);
           if (items.length === 0) return null;
-          const { dotColor, bgColor, isDiscount } = catStyle(name);
+          const { dotColor, bgColor, isDiscount, isPercent } = catStyle(name);
           return (
             <div key={name} className="mt-20 first:mt-0">
               <div className="flex items-center gap-[10px] mx-[2px] mb-6">
@@ -134,6 +137,7 @@ export default function OrderStation({
                     imageUrl={item.imageUrl}
                     bgColor={bgColor}
                     isDiscount={isDiscount}
+                    isPercent={isPercent}
                     hasModifiers={(item.modifierGroups?.length ?? 0) > 0}
                     onTap={() => onTapItem(item)}
                   />
@@ -178,10 +182,11 @@ export default function OrderStation({
           ) : (
             <div className="py-[6px]">
               {orderLines.map((l) => {
-                const isDiscount = l.cat === 'Staff Price';
+                const { isDiscount, isPercent } = catStyle(l.cat);
                 const displayName = lang === 'zh' && l.nameZh ? l.nameZh : l.name;
                 const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
                 const unitTotal = l.price + modTotal;
+                const lineTotalCents = isPercent ? promoDiscountCents : unitTotal * l.qty;
                 return (
                   <div key={l.lineKey} className="px-[22px] py-[14px] border-b-[1px] border-[#f1ece2] last:border-b-0">
                     <div className="flex items-start gap-3">
@@ -205,24 +210,35 @@ export default function OrderStation({
                           className="font-mono font-semibold text-[17px] mt-[6px]"
                           style={{ color: isDiscount ? '#c0492f' : '#17714a' }}
                         >
-                          {isDiscount ? '−' : ''}{money(unitTotal * l.qty)}
+                          {isDiscount ? '−' : ''}{money(lineTotalCents)}
                         </div>
                       </div>
-                      <div className="flex items-center border-[1.5px] border-sand rounded-[14px] overflow-hidden flex-shrink-0">
+                      {isPercent ? (
                         <button
-                          onClick={() => onChangeQty(l.lineKey, -1)}
-                          className="w-[50px] h-[50px] border-none bg-warm-white font-bold text-[28px] text-ink cursor-pointer hover:bg-[#ece6da] transition-colors"
+                          onClick={() => onChangeQty(l.lineKey, -l.qty)}
+                          className="w-[50px] h-[50px] flex-shrink-0 flex items-center justify-center rounded-[14px] border-[1.5px] border-[#f0d9d2] bg-[#fbf2ef] text-red cursor-pointer hover:bg-[#f5e2db] transition-colors"
                         >
-                          −
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
+                          </svg>
                         </button>
-                        <span className="w-[45px] text-center font-mono font-bold text-[20px] text-ink">{l.qty}</span>
-                        <button
-                          onClick={() => onChangeQty(l.lineKey, 1)}
-                          className="w-[50px] h-[50px] border-none bg-warm-white font-bold text-[28px] text-ink cursor-pointer hover:bg-[#ece6da] transition-colors"
-                        >
-                          +
-                        </button>
-                      </div>
+                      ) : (
+                        <div className="flex items-center border-[1.5px] border-sand rounded-[14px] overflow-hidden flex-shrink-0">
+                          <button
+                            onClick={() => onChangeQty(l.lineKey, -1)}
+                            className="w-[50px] h-[50px] border-none bg-warm-white font-bold text-[28px] text-ink cursor-pointer hover:bg-[#ece6da] transition-colors"
+                          >
+                            −
+                          </button>
+                          <span className="w-[45px] text-center font-mono font-bold text-[20px] text-ink">{l.qty}</span>
+                          <button
+                            onClick={() => onChangeQty(l.lineKey, 1)}
+                            className="w-[50px] h-[50px] border-none bg-warm-white font-bold text-[28px] text-ink cursor-pointer hover:bg-[#ece6da] transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

@@ -30,6 +30,7 @@ const CAT_BG: Record<string, string> = {
   'Custom': '#f1ddd6',
   'Others': '#e8e3ef',
   'Staff Price': '#dce8ed',
+  'Promotion': '#fbeedd',
 };
 
 export default function MenuManager({
@@ -121,7 +122,9 @@ export default function MenuManager({
                   </div>
                 </div>
 
-                <span className="font-mono font-bold text-[17px] text-green-dark">{money(m.price)}</span>
+                <span className="font-mono font-bold text-[17px] text-green-dark">
+                  {m.cat === 'Promotion' ? `${m.price / 100}%` : money(m.price)}
+                </span>
 
                 <div className="flex gap-2 ml-[6px]">
                   <button
