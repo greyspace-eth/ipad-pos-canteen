@@ -123,7 +123,7 @@ export default function MenuManager({
                 </div>
 
                 <span className="font-mono font-bold text-[17px] text-green-dark">
-                  {m.cat === 'Promotion' ? `${m.price / 100}%` : money(m.price)}
+                  {m.cat === 'Promotion' ? `${m.price}%` : money(m.price)}
                 </span>
 
                 <div className="flex gap-2 ml-[6px]">

@@ -81,7 +81,7 @@ function MenuCard({ name, priceCents, qty, imageUrl, bgColor, isDiscount, isPerc
         <span className="font-semibold text-[18px] leading-[1.15] text-ink">{name}</span>
         <div className="flex items-center gap-[6px] mt-auto">
           <span className="font-mono font-bold text-[19px]" style={{ color: isDiscount ? '#c0492f' : '#17714a' }}>
-            {isDiscount ? '−' : ''}{isPercent ? `${priceCents / 100}%` : money(priceCents)}
+            {isDiscount ? '−' : ''}{isPercent ? `${priceCents}%` : money(priceCents)}
           </span>
           {hasModifiers && (
             <span className="font-mono text-[11px] text-ink-ghost bg-[#f1ece2] px-[5px] py-[2px] rounded-[4px]">+opt</span>

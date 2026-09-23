@@ -107,12 +107,14 @@ export default function MenuModal({
 
           {/* Price */}
           <div className="flex flex-col gap-2">
-            <span className="font-semibold text-[13px] text-ink-muted tracking-[0.02em] font-grotesk">{tr.priceSGD}</span>
+            <span className="font-semibold text-[13px] text-ink-muted tracking-[0.02em] font-grotesk">
+              {draft.cat === 'Promotion' ? tr.discountPercent : tr.priceSGD}
+            </span>
             <input
               value={draft.price}
               onChange={(e) => onChangePrice(e.target.value)}
               inputMode="decimal"
-              placeholder="0.00"
+              placeholder={draft.cat === 'Promotion' ? '50' : '0.00'}
               className="h-[52px] border-[1.5px] border-sand rounded-[13px] px-4 font-mono font-semibold text-[16px] text-ink outline-none bg-warm-white focus:border-green focus:bg-white transition-colors"
             />
           </div>

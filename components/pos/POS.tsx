@@ -69,16 +69,14 @@ const INITIAL: State = {
   draftUploading: false,
 };
 
-// "Promotion" items are created through the same dollar-denominated price field as everything
-// else (so no special form UI is needed), which means a "50% Discount" priced at "50" is stored
-// as 5000 cents — dividing by 100 recovers the intended percent. These lines discount whatever
-// else is in the order rather than contributing their own fixed amount.
+// "Promotion" lines store a plain percent in `price` (e.g. 50 for "50% Discount"), not cents —
+// they discount whatever else is in the order rather than contributing their own fixed amount.
 function computeFromLines(lines: OrderLine[]) {
   let baseCents = 0;
   let promoPercent = 0;
   lines.forEach((l) => {
     if (l.cat === 'Promotion') {
-      promoPercent = l.price / 100;
+      promoPercent = l.price;
       return;
     }
     const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
@@ -512,7 +510,7 @@ export default function POS() {
         id: item.id,
         name: item.name,
         nameZh: item.nameZh ?? '',
-        price: (item.price / 100).toFixed(2),
+        price: item.cat === 'Promotion' ? String(item.price) : (item.price / 100).toFixed(2),
         cat: item.cat,
         imageUrl: item.imageUrl ?? null,
         attachedGroupIds: (item.modifierGroups ?? []).map((g) => g.id),
@@ -565,16 +563,17 @@ export default function POS() {
     if (!d) return;
 
     const name = d.name.trim();
-    const priceDollars = parseFloat(d.price);
-    if (!name || isNaN(priceDollars) || priceDollars < 0) {
+    const priceInput = parseFloat(d.price);
+    if (!name || isNaN(priceInput) || priceInput < 0) {
       update({ draftError: T[s.lang].validationError });
       return;
     }
-    const priceCents = Math.round(priceDollars * 100);
+    // Promotion items store a plain percent (e.g. 50 for "50% Discount"), not cents.
+    const price = d.cat === 'Promotion' ? Math.round(priceInput) : Math.round(priceInput * 100);
     const body = {
       name,
       nameZh: d.nameZh.trim() || null,
-      price: priceCents,
+      price,
       cat: d.cat,
       imageUrl: d.imageUrl ?? null,
       attachedGroupIds: d.attachedGroupIds,
