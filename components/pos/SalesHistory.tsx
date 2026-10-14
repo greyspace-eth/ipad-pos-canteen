@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { HistoryEntry, OrderStatus, Lang } from '@/types/pos';
+import { HistoryEntry, OrderStatus, Lang, DailyClosing } from '@/types/pos';
 import { T } from '@/lib/i18n';
 
 interface Props {
@@ -9,6 +9,17 @@ interface Props {
   loading?: boolean;
   lang: Lang;
   onStatusChange: (id: string, status: 'voided' | 'refunded') => void;
+  historyTab: 'today' | 'closings';
+  onTabChange: (tab: 'today' | 'closings') => void;
+  closings: DailyClosing[];
+  closingsLoading?: boolean;
+  closeSalesConfirmOpen: boolean;
+  closeSalesProcessing: boolean;
+  closeSalesResult: DailyClosing | null;
+  onOpenCloseSalesConfirm: () => void;
+  onCancelCloseSales: () => void;
+  onConfirmCloseSales: () => void;
+  onDismissCloseSalesResult: () => void;
 }
 
 type Filter = 'all' | 'cash' | 'paynow';
@@ -23,7 +34,23 @@ const STATUS_COLORS: Record<OrderStatus, { bg: string; text: string; label: stri
   refunded:  { bg: '#fef8e8', text: '#9a6c00', label: 'statusRefunded' },
 };
 
-export default function SalesHistory({ history, loading, lang, onStatusChange }: Props) {
+function formatClosingDate(iso: string, lang: Lang) {
+  try {
+    return new Date(iso).toLocaleString(lang === 'zh' ? 'zh-SG' : 'en-SG', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true,
+    });
+  } catch {
+    return iso;
+  }
+}
+
+export default function SalesHistory({
+  history, loading, lang, onStatusChange,
+  historyTab, onTabChange, closings, closingsLoading,
+  closeSalesConfirmOpen, closeSalesProcessing, closeSalesResult,
+  onOpenCloseSalesConfirm, onCancelCloseSales, onConfirmCloseSales, onDismissCloseSalesResult,
+}: Props) {
   const tr = T[lang];
   const [filter, setFilter] = useState<Filter>('all');
   const [actionId, setActionId] = useState<string | null>(null);
@@ -78,8 +105,78 @@ export default function SalesHistory({ history, loading, lang, onStatusChange }:
     </button>
   );
 
+  const tabBtn = (t: 'today' | 'closings', label: string) => (
+    <button
+      key={t}
+      onClick={() => onTabChange(t)}
+      className={`h-[38px] px-5 rounded-[11px] font-grotesk font-bold text-[14px] cursor-pointer border-none transition-colors ${
+        historyTab === t
+          ? 'bg-white text-ink shadow-[0_1px_4px_rgba(0,0,0,.1)]'
+          : 'bg-transparent text-[#6b4c36]'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="h-full overflow-y-auto px-9 pt-7 pb-10 relative">
+      {/* Tabs */}
+      <div className="flex items-center justify-between mb-[18px]">
+        <div className="flex bg-[#f1ece2] rounded-[14px] p-[4px] gap-[4px]">
+          {tabBtn('today', tr.historyTabToday)}
+          {tabBtn('closings', tr.historyTabClosings)}
+        </div>
+        {historyTab === 'today' && !loading && history.length > 0 && (
+          <button
+            onClick={onOpenCloseSalesConfirm}
+            className="h-[42px] px-5 rounded-[12px] border-none bg-ink-dark text-white font-grotesk font-bold text-[14px] cursor-pointer active:scale-[0.97] transition-transform"
+          >
+            {tr.closeSalesBtn}
+          </button>
+        )}
+      </div>
+
+      {historyTab === 'closings' ? (
+        <>
+          {closingsLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <span className="font-medium text-[14px] text-ink-ghost font-grotesk">{tr.loading}</span>
+            </div>
+          ) : closings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+              <span className="font-semibold text-[15px] text-ink-faint font-grotesk">{tr.noClosingsTitle}</span>
+              <span className="font-normal text-[13px] text-ink-ghost font-grotesk max-w-[360px]">{tr.noClosingsBody}</span>
+            </div>
+          ) : (
+            closings.map((c) => (
+              <div
+                key={c.id}
+                className="flex items-center gap-4 bg-white border-[1.5px] border-sand rounded-[16px] px-[22px] py-[18px] mb-3"
+              >
+                <div className="flex-1 min-w-0 flex flex-col gap-[3px]">
+                  <span className="font-semibold text-[14px] text-ink font-grotesk">{formatClosingDate(c.closedAt, lang)}</span>
+                  <span className="font-medium text-[12px] text-ink-ghost font-grotesk">
+                    {tr.closingSince} {formatClosingDate(c.periodStart, lang)} · {c.orderCount} {tr.ordersUnit}
+                    {c.voidedCount > 0 && ` · ${c.voidedCount} ${tr.voidOrder}`}
+                    {c.refundedCount > 0 && ` · ${c.refundedCount} ${tr.refundOrder}`}
+                  </span>
+                </div>
+                <span className="flex-shrink-0 font-semibold text-[12px] text-ink-mid bg-[#efeae0] px-[14px] py-[7px] rounded-[10px] font-grotesk">
+                  {tr.cash} {money(c.cashCents)}
+                </span>
+                <span className="flex-shrink-0 font-semibold text-[12px] text-green-dark bg-green-light px-[14px] py-[7px] rounded-[10px] font-grotesk">
+                  PayNow {money(c.paynowCents)}
+                </span>
+                <div className="w-[100px] flex-shrink-0 text-right font-mono font-bold text-[21px] text-[#17714a]">
+                  {money(c.totalCents)}
+                </div>
+              </div>
+            ))
+          )}
+        </>
+      ) : (
+      <>
       {/* Stats */}
       <div className="flex gap-4 mb-[18px]">
         <div className="flex-1 bg-white border-[1.5px] border-sand rounded-[18px] px-6 py-5 flex flex-col gap-[6px]">
@@ -202,6 +299,8 @@ export default function SalesHistory({ history, loading, lang, onStatusChange }:
           );
         })
       )}
+      </>
+      )}
 
       {/* Void / Refund confirmation overlay */}
       {actionEntry && (
@@ -244,6 +343,72 @@ export default function SalesHistory({ history, loading, lang, onStatusChange }:
                 {processing ? '…' : tr.refundOrder}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close Sales confirmation overlay */}
+      {closeSalesConfirmOpen && (
+        <div className="absolute inset-0 bg-[rgba(31,27,23,0.55)] flex items-center justify-center z-20">
+          <div
+            className="w-[420px] bg-white rounded-[24px] px-8 py-8 flex flex-col gap-[16px]"
+            style={{ boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}
+          >
+            <div className="flex flex-col gap-[4px]">
+              <span className="font-bold text-[20px] text-ink font-grotesk">{tr.closeSalesConfirmTitle}</span>
+              <span className="font-medium text-[13px] text-ink-muted font-grotesk leading-[1.5]">{tr.closeSalesConfirmBody}</span>
+            </div>
+            <div className="bg-[#f8f4ee] rounded-[14px] px-5 py-4 flex items-center justify-between">
+              <span className="font-medium text-[14px] text-ink-mid font-grotesk">{completed.length} {tr.ordersUnit}</span>
+              <span className="font-mono font-bold text-[20px] text-green-dark ml-3 flex-shrink-0">
+                {money(totalSalesCents)}
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={onCancelCloseSales}
+                disabled={closeSalesProcessing}
+                className="flex-1 h-[52px] rounded-[13px] border-[1.5px] border-sand bg-white text-ink font-grotesk font-semibold text-[14px] cursor-pointer hover:bg-[#f5f1ea] transition-colors disabled:opacity-50"
+              >
+                {tr.cancel}
+              </button>
+              <button
+                onClick={onConfirmCloseSales}
+                disabled={closeSalesProcessing}
+                className="flex-1 h-[52px] rounded-[13px] border-none bg-ink-dark text-white font-grotesk font-bold text-[14px] cursor-pointer disabled:opacity-50 active:scale-[0.98] transition-transform"
+              >
+                {closeSalesProcessing ? '…' : tr.closeSalesBtn}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Close Sales success overlay */}
+      {closeSalesResult && (
+        <div className="absolute inset-0 bg-[rgba(31,27,23,0.55)] flex items-center justify-center z-20">
+          <div
+            className="w-[380px] bg-white rounded-[24px] px-8 py-9 flex flex-col items-center gap-[16px] animate-popin"
+            style={{ boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}
+          >
+            <div className="w-[64px] h-[64px] rounded-full bg-green-light flex items-center justify-center">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#1f8a5b" strokeWidth="2.6">
+                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div className="flex flex-col items-center gap-[4px]">
+              <span className="font-bold text-[19px] text-ink font-grotesk">{tr.closeSalesSuccessTitle}</span>
+              <span className="font-medium text-[14px] text-ink-muted font-grotesk">
+                {closeSalesResult.orderCount} {tr.ordersUnit}
+              </span>
+            </div>
+            <span className="font-mono font-bold text-[34px] text-green-dark">{money(closeSalesResult.totalCents)}</span>
+            <button
+              onClick={onDismissCloseSalesResult}
+              className="w-full h-[52px] rounded-[13px] border-none bg-ink-dark text-white font-grotesk font-bold text-[14px] cursor-pointer active:scale-[0.98] transition-transform mt-[4px]"
+            >
+              {tr.doneBtn}
+            </button>
           </div>
         </div>
       )}

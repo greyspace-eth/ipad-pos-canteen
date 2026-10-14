@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   AppStatus, Page, Category, MenuItem, HistoryEntry, ConfirmState,
   Draft, MenuCategory, OrderLine, Lang, OrderStatus, OrderType,
-  ModifierGroup, ModifierOption, SelectedModifier,
+  ModifierGroup, ModifierOption, SelectedModifier, DailyClosing,
 } from '@/types/pos';
 import { T } from '@/lib/i18n';
 import LoginScreen from './LoginScreen';
@@ -38,6 +38,12 @@ interface State {
   confirm: ConfirmState | null;
   history: HistoryEntry[];
   historyLoading: boolean;
+  historyTab: 'today' | 'closings';
+  closings: DailyClosing[];
+  closingsLoading: boolean;
+  closeSalesConfirmOpen: boolean;
+  closeSalesProcessing: boolean;
+  closeSalesResult: DailyClosing | null;
   menuModalOpen: boolean;
   draft: Draft | null;
   draftError: string;
@@ -63,6 +69,12 @@ const INITIAL: State = {
   confirm: null,
   history: [],
   historyLoading: false,
+  historyTab: 'today',
+  closings: [],
+  closingsLoading: false,
+  closeSalesConfirmOpen: false,
+  closeSalesProcessing: false,
+  closeSalesResult: null,
   menuModalOpen: false,
   draft: null,
   draftError: '',
@@ -192,6 +204,40 @@ export default function POS() {
       }
     } catch {
       update({ historyLoading: false });
+    }
+  }
+
+  async function loadClosings() {
+    update({ closingsLoading: true });
+    try {
+      const res = await fetch('/api/close-sales');
+      if (res.ok) {
+        const data: DailyClosing[] = await res.json();
+        update({ closings: data, closingsLoading: false });
+      }
+    } catch {
+      update({ closingsLoading: false });
+    }
+  }
+
+  async function closeSales() {
+    update({ closeSalesProcessing: true });
+    try {
+      const res = await fetch('/api/close-sales', { method: 'POST' });
+      if (res.ok) {
+        const closing: DailyClosing = await res.json();
+        update((prev) => ({
+          closeSalesConfirmOpen: false,
+          closeSalesProcessing: false,
+          closeSalesResult: closing,
+          history: [],
+          closings: [closing, ...prev.closings],
+        }));
+      } else {
+        update({ closeSalesProcessing: false, closeSalesConfirmOpen: false });
+      }
+    } catch {
+      update({ closeSalesProcessing: false, closeSalesConfirmOpen: false });
     }
   }
 
@@ -668,7 +714,7 @@ export default function POS() {
           lang={s.lang}
           onNav={(p: Page) => {
             update({ page: p });
-            if (p === 'history') loadHistory();
+            if (p === 'history') { loadHistory(); loadClosings(); }
           }}
           onLogout={doLogout}
         />
@@ -700,6 +746,17 @@ export default function POS() {
               <SalesHistory
                 history={s.history}
                 loading={s.historyLoading}
+                historyTab={s.historyTab}
+                onTabChange={(tab) => update({ historyTab: tab })}
+                closings={s.closings}
+                closingsLoading={s.closingsLoading}
+                closeSalesConfirmOpen={s.closeSalesConfirmOpen}
+                closeSalesProcessing={s.closeSalesProcessing}
+                closeSalesResult={s.closeSalesResult}
+                onOpenCloseSalesConfirm={() => update({ closeSalesConfirmOpen: true })}
+                onCancelCloseSales={() => update({ closeSalesConfirmOpen: false })}
+                onConfirmCloseSales={closeSales}
+                onDismissCloseSalesResult={() => update({ closeSalesResult: null })}
                 lang={s.lang}
                 onStatusChange={(id, status) =>
                   update((prev) => ({

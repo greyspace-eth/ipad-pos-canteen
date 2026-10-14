@@ -61,6 +61,18 @@ export interface HistoryEntry {
   items: { name: string; qty: number; modifiers?: string }[];
 }
 
+export interface DailyClosing {
+  id: string;
+  periodStart: string;
+  closedAt: string;
+  orderCount: number;
+  totalCents: number;
+  cashCents: number;
+  paynowCents: number;
+  voidedCount: number;
+  refundedCount: number;
+}
+
 export interface ConfirmState {
   orderNo: string;
   methodLabel: string;

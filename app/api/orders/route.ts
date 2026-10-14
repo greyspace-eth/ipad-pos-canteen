@@ -18,12 +18,14 @@ async function nextOrderNo(): Promise<string> {
   }
 }
 
+// Default view is "since the last Close Sales" (closedAt: null) — in normal daily-close use
+// this is exactly today's orders, without needing to grow a take limit as history accumulates.
 export async function GET() {
   const orders = await prisma.order.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, closedAt: null },
     include: { items: true },
     orderBy: { createdAt: 'desc' },
-    take: 50,
+    take: 500,
   });
   return NextResponse.json(orders);
 }

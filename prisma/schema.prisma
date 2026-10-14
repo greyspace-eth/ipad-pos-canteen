@@ -73,8 +73,21 @@ model Order {
   status            String      @default("completed") // completed | voided | refunded
   createdAt         DateTime    @default(now())
   deletedAt         DateTime?
+  closedAt          DateTime?   // set by "Close Sales" — archived out of the default/today view
 
   items OrderItem[]
+}
+
+model DailyClosing {
+  id            String   @id @default(cuid())
+  periodStart   DateTime // earliest order included in this closing
+  closedAt      DateTime @default(now()) // when the closing was run (~ latest order covered)
+  orderCount    Int      // completed orders only
+  totalCents    Int      // completed orders only
+  cashCents     Int
+  paynowCents   Int
+  voidedCount   Int
+  refundedCount Int
 }
 
 model OrderItem {
