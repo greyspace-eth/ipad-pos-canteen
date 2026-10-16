@@ -7,13 +7,15 @@ import { Category } from '@/types/pos';
 interface Props {
   lang: Lang;
   categories: Category[];
+  autoPrint: boolean;
+  onChangeAutoPrint: (on: boolean) => void;
   onChangeLang: (l: Lang) => void;
   onAddCategory: (name: string) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
 }
 
 export default function SettingsPage({
-  lang, categories, onChangeLang, onAddCategory, onDeleteCategory,
+  lang, categories, autoPrint, onChangeAutoPrint, onChangeLang, onAddCategory, onDeleteCategory,
 }: Props) {
   const tr = T[lang];
   const [newCatName, setNewCatName] = useState('');
@@ -58,6 +60,33 @@ export default function SettingsPage({
               }`}
             >
               {l === 'en' ? tr.langEn : tr.langZh}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Auto Print */}
+      <div className="bg-white border-[1.5px] border-sand rounded-[22px] p-7 max-w-[560px] mb-5">
+        <span className="font-bold text-[13px] tracking-[0.12em] uppercase text-ink-muted font-grotesk">
+          {tr.autoPrintLabel}
+        </span>
+        <p className="font-medium text-[13px] text-ink-ghost font-grotesk mt-[6px] mb-5 leading-[1.5]">
+          {tr.autoPrintBody}
+        </p>
+        <div className="flex gap-3">
+          {([true, false] as const).map((on) => (
+            <button
+              key={String(on)}
+              onClick={() => onChangeAutoPrint(on)}
+              className={`flex-1 h-[62px] rounded-[14px] border-[1.5px] cursor-pointer font-grotesk font-bold text-[17px] transition-colors active:scale-[0.97] ${
+                autoPrint === on
+                  ? on
+                    ? 'bg-green border-green text-white'
+                    : 'bg-ink-dark border-ink-dark text-white'
+                  : 'bg-warm-white border-sand text-ink-mid hover:bg-cream'
+              }`}
+            >
+              {on ? tr.autoPrintOn : tr.autoPrintOff}
             </button>
           ))}
         </div>

@@ -33,6 +33,7 @@ interface State {
   menuTab: 'items' | 'modifiers';
   orderLines: OrderLine[];
   orderType: OrderType;
+  autoPrint: boolean;
   modifierPending: MenuItem | null;
   cashInputOpen: boolean;
   confirm: ConfirmState | null;
@@ -64,6 +65,7 @@ const INITIAL: State = {
   menuTab: 'items',
   orderLines: [],
   orderType: 'dine_in',
+  autoPrint: true,
   modifierPending: null,
   cashInputOpen: false,
   confirm: null,
@@ -162,6 +164,10 @@ export default function POS() {
     const stored = localStorage.getItem('pos-lang') as Lang | null;
     if (stored === 'en' || stored === 'zh') {
       setS((prev) => ({ ...prev, lang: stored }));
+    }
+    const storedAutoPrint = localStorage.getItem('pos-auto-print');
+    if (storedAutoPrint === 'off') {
+      setS((prev) => ({ ...prev, autoPrint: false }));
     }
   }, []);
 
@@ -264,6 +270,11 @@ export default function POS() {
   function changeLang(l: Lang) {
     localStorage.setItem('pos-lang', l);
     update({ lang: l });
+  }
+
+  function changeAutoPrint(on: boolean) {
+    localStorage.setItem('pos-auto-print', on ? 'on' : 'off');
+    update({ autoPrint: on });
   }
 
   // ── Auth ────────────────────────────────────────────────────────────────
@@ -381,59 +392,62 @@ export default function POS() {
         const newOrder = await res.json();
 
         // Best-effort: a failed print job shouldn't block the order, which already succeeded.
+        // Skipped entirely when "Auto Print" is off in Settings.
         const mode = s.orderType === 'dine_in' ? 'DINE-IN' : 'TAKEAWAY';
-        try {
-          await fetch('/api/print', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'receipt',
-              orderNo: newOrder.orderNo,
-              mode,
-              items: o.lines.map((l) => {
-                if (l.cat === 'Promotion') {
-                  return { qty: 1, name: l.name, total: -o.promoDiscountCents / 100, modifiers: [] };
-                }
-                const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
-                return {
-                  qty: l.qty,
-                  name: l.name,
-                  total: (l.price + modTotal) * l.qty / 100,
-                  modifiers: l.modifiers.map((m) => m.optionName),
-                };
+        if (s.autoPrint) {
+          try {
+            await fetch('/api/print', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'receipt',
+                orderNo: newOrder.orderNo,
+                mode,
+                items: o.lines.map((l) => {
+                  if (l.cat === 'Promotion') {
+                    return { qty: 1, name: l.name, total: -o.promoDiscountCents / 100, modifiers: [] };
+                  }
+                  const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
+                  return {
+                    qty: l.qty,
+                    name: l.name,
+                    total: (l.price + modTotal) * l.qty / 100,
+                    modifiers: l.modifiers.map((m) => m.optionName),
+                  };
+                }),
+                total: o.totalCents / 100,
+                payment: method === 'cash' ? 'CASH' : 'PAYNOW',
+                cashReceived: method === 'cash' ? (cashReceivedCents ?? 0) / 100 : undefined,
+                cashier: 'admin',
               }),
-              total: o.totalCents / 100,
-              payment: method === 'cash' ? 'CASH' : 'PAYNOW',
-              cashReceived: method === 'cash' ? (cashReceivedCents ?? 0) / 100 : undefined,
-              cashier: 'admin',
-            }),
-          });
-        } catch {
-          // no-op — printing is best-effort, order already succeeded
-        }
+            });
+          } catch {
+            // no-op — printing is best-effort, order already succeeded
+          }
 
-        // Kitchen ticket — no prices, just what to make.
-        try {
-          await fetch('/api/print', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'kitchen',
-              orderNo: newOrder.orderNo,
-              mode,
-              printedAt: formatPrintedAt(new Date()),
-              // Discount lines (Staff Price, Promotion) aren't food — the kitchen has nothing to make for them.
-              items: o.lines
-                .filter((l) => l.cat !== 'Staff Price' && l.cat !== 'Promotion')
-                .map((l) => ({
-                  qty: l.qty,
-                  name: l.name,
-                  modifiers: l.modifiers.map((m) => m.optionName),
-                })),
-            }),
-          });
-        } catch {
-          // no-op — printing is best-effort, order already succeeded
+          // Kitchen ticket — no prices, just what to make.
+          try {
+            await fetch('/api/print', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'kitchen',
+                orderNo: newOrder.orderNo,
+                mode,
+                printedAt: formatPrintedAt(new Date()),
+                // Discount lines (Staff Price, Promotion) aren't food — the kitchen has nothing to make for them.
+                items: o.lines
+                  .filter((l) => l.cat !== 'Staff Price' && l.cat !== 'Promotion')
+                  .map((l) => ({
+                    qty: l.qty,
+                    name: l.name,
+                    modifiers: l.modifiers.map((m) => m.optionName),
+                  })),
+              }),
+            });
+          } catch {
+            // no-op — printing is best-effort, order already succeeded
+          }
         }
 
         const tr = T[s.lang];
@@ -787,6 +801,8 @@ export default function POS() {
               <SettingsPage
                 lang={s.lang}
                 categories={s.categories}
+                autoPrint={s.autoPrint}
+                onChangeAutoPrint={changeAutoPrint}
                 onChangeLang={changeLang}
                 onAddCategory={addCategory}
                 onDeleteCategory={deleteCategory}

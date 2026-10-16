@@ -89,6 +89,11 @@ export const T = {
     settingsLang: 'Language',
     langEn: 'English',
     langZh: '中文',
+    // Settings — auto print
+    autoPrintLabel: 'Auto Print',
+    autoPrintBody: 'When on, the receipt and kitchen slip print automatically after Cash or PayNow is selected. When off, nothing prints until you use Reprint from History.',
+    autoPrintOn: 'ON',
+    autoPrintOff: 'OFF',
     // Settings — categories
     settingsCat: 'Categories',
     systemBadge: 'System',
@@ -214,6 +219,11 @@ export const T = {
     settingsLang: '语言',
     langEn: 'English',
     langZh: '中文',
+    // Settings — auto print
+    autoPrintLabel: '自动打印',
+    autoPrintBody: '开启后，选择现金或PayNow（订单完成）会自动打印收据和厨房单。关闭后，除非在历史记录中使用"重打"，否则不会打印。',
+    autoPrintOn: '开',
+    autoPrintOff: '关',
     // Settings — categories
     settingsCat: '分类管理',
     systemBadge: '系统',
