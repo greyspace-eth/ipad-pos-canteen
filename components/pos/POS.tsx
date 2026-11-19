@@ -377,11 +377,14 @@ export default function POS() {
               return { menuItemId: l.id, name: l.name, quantity: 1, unitCents: -o.promoDiscountCents, modifiers: [] };
             }
             const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
+            // Staff Price is a deduction, not a charge — store it negative so any itemized
+            // breakdown (receipts, reprints, history) reflects it correctly.
+            const sign = l.cat === 'Staff Price' ? -1 : 1;
             return {
               menuItemId: l.id,
               name: l.name,
               quantity: l.qty,
-              unitCents: l.price + modTotal,
+              unitCents: sign * (l.price + modTotal),
               modifiers: l.modifiers,
             };
           }),
@@ -403,18 +406,26 @@ export default function POS() {
                 type: 'receipt',
                 orderNo: newOrder.orderNo,
                 mode,
-                items: o.lines.map((l) => {
-                  if (l.cat === 'Promotion') {
-                    return { qty: 1, name: l.name, total: -o.promoDiscountCents / 100, modifiers: [] };
-                  }
-                  const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
-                  return {
-                    qty: l.qty,
-                    name: l.name,
-                    total: (l.price + modTotal) * l.qty / 100,
-                    modifiers: l.modifiers.map((m) => m.optionName),
-                  };
-                }),
+                // Staff Price is excluded here (and totaled separately below) so SUBTOTAL on the
+                // printed receipt reflects the food/drink total before any staff discount, rather
+                // than double-counting it the way including it in this list would.
+                items: o.lines
+                  .filter((l) => l.cat !== 'Staff Price')
+                  .map((l) => {
+                    if (l.cat === 'Promotion') {
+                      return { qty: 1, name: l.name, total: -o.promoDiscountCents / 100, modifiers: [] };
+                    }
+                    const modTotal = l.modifiers.reduce((a, m) => a + m.priceCents, 0);
+                    return {
+                      qty: l.qty,
+                      name: l.name,
+                      total: (l.price + modTotal) * l.qty / 100,
+                      modifiers: l.modifiers.map((m) => m.optionName),
+                    };
+                  }),
+                staffDiscount: o.lines
+                  .filter((l) => l.cat === 'Staff Price')
+                  .reduce((a, l) => a + (l.price + l.modifiers.reduce((b, m) => b + m.priceCents, 0)) * l.qty, 0) / 100 || undefined,
                 total: o.totalCents / 100,
                 payment: method === 'cash' ? 'CASH' : 'PAYNOW',
                 cashReceived: method === 'cash' ? (cashReceivedCents ?? 0) / 100 : undefined,
